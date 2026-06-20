@@ -1,0 +1,1697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutomatePath — Manual to Automation Testing</title>
+<style>
+  :root{
+    --bg:#0b0d10; --surface:#13161b; --surface2:#1a1e25; --border:#252a33; --border-light:#2e3440;
+    --text:#e8eaed; --text-dim:#9aa3b2; --text-faint:#5f6b7d;
+    --accent:#3b82f6; --accent-dim:#1e3a5f;
+    --green:#34d399; --green-dim:#0d2b22;
+    --amber:#fbbf24; --amber-dim:#3a2e0a;
+    --red:#f87171; --red-dim:#3a1414;
+    --purple:#a78bfa;
+    --radius:10px; --radius-lg:14px;
+    --mono: 'SF Mono', 'Fira Code', Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:var(--sans); background:var(--bg); color:var(--text);
+    min-height:100vh; line-height:1.5;
+  }
+  #app{display:flex; min-height:100vh;}
+
+  /* ===== Auth screen ===== */
+  .auth-screen{
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background:var(--bg); padding:20px;
+  }
+  .auth-card{
+    width:100%; max-width:380px; background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-lg); padding:28px 26px;
+  }
+  .auth-brand{margin-bottom:22px; text-align:center;}
+  .auth-brand-title{font-size:18px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px;}
+  .auth-brand-sub{font-size:12.5px; color:var(--text-dim); margin-top:4px;}
+  .auth-tabs{display:flex; border:1px solid var(--border); border-radius:8px; overflow:hidden; margin-bottom:20px;}
+  .auth-tab{flex:1; text-align:center; padding:9px; font-size:13px; color:var(--text-dim); cursor:pointer; background:var(--surface2);}
+  .auth-tab.active{background:var(--accent); color:#fff; font-weight:600;}
+  .auth-form{display:flex; flex-direction:column;}
+  .auth-label{font-size:12px; color:var(--text-dim); margin-bottom:5px; margin-top:10px;}
+  .auth-label:first-child{margin-top:0;}
+  .auth-input{
+    background:var(--surface2); border:1px solid var(--border-light); border-radius:8px;
+    padding:10px 12px; color:var(--text); font-size:13.5px; outline:none; font-family:var(--sans);
+  }
+  .auth-input:focus{border-color:var(--accent);}
+  .auth-error{
+    color:var(--red); font-size:12px; margin-top:10px; min-height:0; display:none;
+  }
+  .auth-error.show{display:block;}
+  .auth-submit{
+    margin-top:18px; background:var(--accent); border:none; color:#fff; font-weight:600;
+    padding:11px; border-radius:8px; font-size:13.5px; cursor:pointer;
+  }
+  .auth-submit:hover{background:#2f6fdb;}
+  .auth-footnote{
+    margin-top:18px; font-size:11px; color:var(--text-faint); text-align:center; line-height:1.5;
+  }
+
+  /* ===== User chip (top bar) ===== */
+  .user-chip{
+    display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:20px;
+    cursor:pointer; position:relative; font-size:12.5px; color:var(--text-dim);
+    border:1px solid transparent;
+  }
+  .user-chip:hover{border-color:var(--border);}
+  .user-avatar{
+    width:26px; height:26px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--purple));
+    display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#fff; flex-shrink:0;
+  }
+  .user-menu{
+    position:absolute; top:38px; right:0; background:var(--surface); border:1px solid var(--border);
+    border-radius:8px; min-width:130px; box-shadow:0 6px 20px rgba(0,0,0,0.35); display:none; z-index:20; overflow:hidden;
+  }
+  .user-menu.open{display:block;}
+  .user-menu-item{padding:10px 14px; font-size:13px; color:var(--text); cursor:pointer;}
+  .user-menu-item:hover{background:var(--surface2);}
+
+
+  /* ===== Sidebar ===== */
+  #sidebar{
+    width:280px; flex-shrink:0; background:var(--surface);
+    border-right:1px solid var(--border); display:flex; flex-direction:column;
+    height:100vh; position:sticky; top:0; overflow-y:auto;
+  }
+  .brand{
+    padding:20px 18px 16px; border-bottom:1px solid var(--border);
+  }
+  .brand-title{font-size:17px; font-weight:700; display:flex; align-items:center; gap:8px;}
+  .brand-badge{
+    font-size:10px; font-weight:700; background:var(--accent); color:#fff;
+    padding:2px 6px; border-radius:4px; letter-spacing:0.3px;
+  }
+  .brand-sub{font-size:12px; color:var(--text-dim); margin-top:4px;}
+
+  .progress-box{padding:16px 18px; border-bottom:1px solid var(--border);}
+  .progress-label{font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; display:flex; justify-content:space-between;}
+  .progress-track{height:6px; background:var(--surface2); border-radius:3px; overflow:hidden;}
+  .progress-fill{height:100%; background:linear-gradient(90deg,var(--accent),var(--purple)); border-radius:3px; transition:width .4s ease;}
+  .progress-stats{display:flex; gap:14px; margin-top:10px; font-size:11px; color:var(--text-dim);}
+  .stat-chip{display:flex; align-items:center; gap:4px;}
+
+  .nav-section{padding:10px 10px;}
+  .nav-section-title{font-size:11px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.6px; padding:10px 10px 4px;}
+  .nav-item{
+    display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px;
+    cursor:pointer; font-size:13.5px; color:var(--text-dim); transition:background .15s;
+    user-select:none;
+  }
+  .nav-item:hover{background:var(--surface2); color:var(--text);}
+  .nav-item.active{background:var(--accent-dim); color:#bcd6ff;}
+  .nav-icon{
+    width:20px; height:20px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700;
+    background:var(--surface2); color:var(--text-faint); border:1px solid var(--border-light);
+  }
+  .nav-icon.done{background:var(--green-dim); color:var(--green); border-color:transparent;}
+  .nav-icon.active-icon{background:var(--accent); color:#fff; border-color:transparent;}
+  .nav-title{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .lock-icon{font-size:11px; color:var(--text-faint);}
+
+  /* ===== Main ===== */
+  #main{flex:1; min-width:0; display:flex; flex-direction:column;}
+  #topbar{
+    height:54px; border-bottom:1px solid var(--border); display:flex; align-items:center;
+    padding:0 24px; gap:12px; background:var(--bg); position:sticky; top:0; z-index:5;
+  }
+  .topbar-crumb{font-size:12px; color:var(--text-faint);}
+  .topbar-title{font-size:14px; font-weight:600;}
+  #content{flex:1; padding:32px 40px 80px; max-width:920px; width:100%;}
+
+  /* ===== Welcome / dashboard ===== */
+  .hero{padding:8px 0 28px;}
+  .hero h1{font-size:28px; font-weight:700; margin-bottom:8px;}
+  .hero p{color:var(--text-dim); font-size:14.5px; max-width:560px;}
+  .track-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; margin-top:24px;}
+  .track-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
+    padding:18px; cursor:pointer; transition:border-color .15s, transform .15s;
+  }
+  .track-card:hover{border-color:var(--accent); transform:translateY(-1px);}
+  .track-card-head{display:flex; align-items:center; gap:10px; margin-bottom:8px;}
+  .track-num{
+    width:26px; height:26px; border-radius:7px; background:var(--accent-dim); color:#bcd6ff;
+    display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;
+  }
+  .track-card h3{font-size:14.5px; font-weight:600;}
+  .track-card p{font-size:12.5px; color:var(--text-dim); line-height:1.5;}
+  .track-meta{display:flex; gap:10px; margin-top:10px; font-size:11px; color:var(--text-faint);}
+
+  /* ===== Lesson page ===== */
+  .lesson-header{margin-bottom:22px;}
+  .lesson-kicker{font-size:11.5px; color:var(--accent); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;}
+  .lesson-header h1{font-size:25px; font-weight:700; margin-bottom:10px;}
+  .lesson-meta-row{display:flex; gap:14px; font-size:12px; color:var(--text-faint);}
+
+  .lesson-body{font-size:15px; color:#d6d9de; line-height:1.75;}
+  .lesson-body p{margin-bottom:14px;}
+  .lesson-body h2{font-size:18px; font-weight:600; margin:28px 0 12px; color:var(--text);}
+  .lesson-body h3{font-size:15px; font-weight:600; margin:20px 0 8px; color:var(--text);}
+  .lesson-body ul, .lesson-body ol{margin:0 0 14px 22px;}
+  .lesson-body li{margin-bottom:6px;}
+  .lesson-body code{
+    font-family:var(--mono); font-size:13px; background:var(--surface2);
+    padding:2px 6px; border-radius:4px; color:#fbbf24;
+  }
+  .callout{
+    background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--accent);
+    border-radius:8px; padding:12px 16px; margin:16px 0; font-size:13.5px;
+  }
+  .callout.tip{border-left-color:var(--green);}
+  .callout.warn{border-left-color:var(--amber);}
+  .callout-label{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:4px;}
+  .callout.tip .callout-label{color:var(--green);}
+  .callout.warn .callout-label{color:var(--amber);}
+  .callout:not(.tip):not(.warn) .callout-label{color:var(--accent);}
+
+  .code-block{
+    background:#0d0f13; border:1px solid var(--border); border-radius:10px;
+    margin:16px 0; overflow:hidden;
+  }
+  .code-block-head{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:8px 14px; border-bottom:1px solid var(--border); font-size:11px; color:var(--text-faint);
+  }
+  .code-block pre{
+    padding:14px 16px; overflow-x:auto; font-family:var(--mono); font-size:12.5px; line-height:1.6; color:#d4d8de;
+  }
+  .copy-btn{
+    background:none; border:1px solid var(--border-light); color:var(--text-dim); font-size:11px;
+    padding:3px 9px; border-radius:6px; cursor:pointer;
+  }
+  .copy-btn:hover{color:var(--text); border-color:var(--text-dim);}
+
+  /* syntax-ish coloring */
+  .tok-kw{color:#c792ea;} .tok-str{color:#c3e88d;} .tok-fn{color:#82aaff;} .tok-cm{color:#5f6b7d; font-style:italic;}
+
+  .lesson-nav{
+    display:flex; justify-content:space-between; margin-top:36px; padding-top:20px; border-top:1px solid var(--border);
+  }
+  .nav-btn{
+    background:var(--surface); border:1px solid var(--border); color:var(--text);
+    padding:10px 16px; border-radius:8px; font-size:13px; cursor:pointer; font-weight:500;
+  }
+  .nav-btn:hover{border-color:var(--accent);}
+  .nav-btn.primary{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .nav-btn:disabled{opacity:0.3; cursor:not-allowed;}
+
+  /* ===== Quiz ===== */
+  .quiz-box{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
+    padding:22px; margin-top:18px;
+  }
+  .quiz-q{font-size:14.5px; font-weight:600; margin-bottom:14px;}
+  .quiz-progress{font-size:11.5px; color:var(--text-faint); margin-bottom:6px;}
+  .quiz-opt{
+    display:flex; align-items:center; gap:10px; padding:11px 14px; border:1px solid var(--border);
+    border-radius:8px; margin-bottom:8px; cursor:pointer; font-size:13.5px; transition:all .12s;
+  }
+  .quiz-opt:hover{border-color:var(--accent); background:var(--surface2);}
+  .quiz-opt.selected{border-color:var(--accent); background:var(--accent-dim);}
+  .quiz-opt.correct{border-color:var(--green); background:var(--green-dim); color:var(--green);}
+  .quiz-opt.incorrect{border-color:var(--red); background:var(--red-dim); color:var(--red);}
+  .opt-letter{
+    width:22px; height:22px; border-radius:6px; background:var(--surface2); border:1px solid var(--border-light);
+    display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0;
+  }
+  .quiz-explain{
+    margin-top:12px; padding:12px 14px; background:var(--surface2); border-radius:8px; font-size:13px; color:var(--text-dim); display:none;
+  }
+  .quiz-explain.show{display:block;}
+  .quiz-footer{display:flex; justify-content:space-between; align-items:center; margin-top:16px;}
+  .quiz-score{font-size:12.5px; color:var(--text-dim);}
+
+  /* ===== Sandbox / code editor ===== */
+  .sandbox-wrap{
+    border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; margin-top:18px;
+  }
+  .sandbox-tabs{display:flex; background:var(--surface); border-bottom:1px solid var(--border);}
+  .sandbox-tab{
+    padding:10px 18px; font-size:12.5px; color:var(--text-dim); cursor:pointer; border-bottom:2px solid transparent;
+  }
+  .sandbox-tab.active{color:var(--text); border-bottom-color:var(--accent); background:var(--surface2);}
+  .sandbox-grid{display:grid; grid-template-columns:1fr 1fr; min-height:340px;}
+  @media(max-width:760px){.sandbox-grid{grid-template-columns:1fr;}}
+  .editor-pane{background:#0d0f13; border-right:1px solid var(--border); display:flex; flex-direction:column;}
+  .editor-pane-head{
+    display:flex; justify-content:space-between; align-items:center; padding:8px 14px;
+    border-bottom:1px solid var(--border); font-size:11px; color:var(--text-faint);
+  }
+  #codeInput{
+    flex:1; background:transparent; border:none; outline:none; color:#d4d8de;
+    font-family:var(--mono); font-size:12.5px; line-height:1.7; padding:14px 16px; resize:none; min-height:280px;
+  }
+  .run-btn{
+    background:var(--green-dim); border:1px solid var(--green); color:var(--green);
+    padding:5px 14px; border-radius:6px; font-size:11.5px; cursor:pointer; font-weight:600;
+    display:flex; align-items:center; gap:5px;
+  }
+  .run-btn:hover{background:var(--green); color:#06291c;}
+  .preview-pane{display:flex; flex-direction:column; background:var(--surface);}
+  .preview-pane-head{
+    padding:8px 14px; border-bottom:1px solid var(--border); font-size:11px; color:var(--text-faint);
+    display:flex; justify-content:space-between;
+  }
+  #mockSite{
+    flex:1; background:#fff; color:#111; padding:18px; overflow-y:auto; font-family:var(--sans); font-size:13px;
+    position:relative;
+  }
+  #consoleOut{
+    background:#0d0f13; border-top:1px solid var(--border); padding:12px 16px; font-family:var(--mono);
+    font-size:11.5px; line-height:1.7; max-height:140px; overflow-y:auto; color:var(--text-dim);
+  }
+  .console-line{margin-bottom:3px;}
+  .console-pass{color:var(--green);}
+  .console-fail{color:var(--red);}
+  .console-info{color:var(--text-faint);}
+
+  /* mock site elements get highlighted when "found" */
+  .mock-highlight{outline:2px solid var(--accent) !important; outline-offset:2px; transition:outline .2s;}
+
+  /* ===== Exercise checklist ===== */
+  .ex-task{
+    display:flex; align-items:flex-start; gap:10px; padding:10px 0; border-bottom:1px solid var(--border);
+    font-size:13.5px;
+  }
+  .ex-task:last-child{border-bottom:none;}
+  .ex-check{
+    width:18px; height:18px; border-radius:5px; border:1px solid var(--border-light); flex-shrink:0; margin-top:1px;
+  }
+
+  /* ===== Cert ===== */
+  .cert-box{
+    background:linear-gradient(135deg,var(--surface),var(--surface2)); border:1px solid var(--border-light);
+    border-radius:var(--radius-lg); padding:40px; text-align:center; margin-top:20px;
+  }
+  .cert-box h2{font-size:22px; margin-bottom:8px;}
+  .cert-box p{color:var(--text-dim); font-size:13.5px; max-width:420px; margin:0 auto 18px;}
+
+  /* scrollbar */
+  ::-webkit-scrollbar{width:8px; height:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--border-light); border-radius:4px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  .toast{
+    position:fixed; bottom:20px; right:20px; background:var(--surface); border:1px solid var(--green);
+    color:var(--green); padding:12px 18px; border-radius:8px; font-size:13px; font-weight:600;
+    box-shadow:0 4px 18px rgba(0,0,0,0.3); opacity:0; transform:translateY(8px); transition:all .25s;
+    pointer-events:none; z-index:50;
+  }
+  .toast.show{opacity:1; transform:translateY(0);}
+
+  #mobileToggle{display:none;}
+  @media(max-width:860px){
+    #sidebar{position:fixed; left:0; top:0; z-index:30; transform:translateX(-100%); transition:transform .2s; box-shadow:0 0 30px rgba(0,0,0,0.5);}
+    #sidebar.open{transform:translateX(0);}
+    #mobileToggle{
+      display:flex; align-items:center; justify-content:center; width:34px; height:34px;
+      border:1px solid var(--border); border-radius:8px; background:var(--surface); cursor:pointer; color:var(--text);
+    }
+    #content{padding:20px 16px 60px;}
+    .sandbox-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div id="authScreen" class="auth-screen">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="auth-brand-title"><span>AutomatePath</span><span class="brand-badge">BETA</span></div>
+      <div class="auth-brand-sub">Manual → automation testing</div>
+    </div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Log in</div>
+      <div class="auth-tab" id="tabSignup" onclick="switchAuthTab('signup')">Sign up</div>
+    </div>
+
+    <div id="loginForm" class="auth-form">
+      <label class="auth-label">Email</label>
+      <input type="email" id="loginEmail" class="auth-input" placeholder="you@example.com" autocomplete="username">
+      <label class="auth-label">Password</label>
+      <input type="password" id="loginPassword" class="auth-input" placeholder="••••••••" autocomplete="current-password">
+      <div class="auth-error" id="loginError"></div>
+      <button class="auth-submit" onclick="handleLogin()">Log in</button>
+    </div>
+
+    <div id="signupForm" class="auth-form" style="display:none;">
+      <label class="auth-label">Email</label>
+      <input type="email" id="signupEmail" class="auth-input" placeholder="you@example.com" autocomplete="username">
+      <label class="auth-label">Password</label>
+      <input type="password" id="signupPassword" class="auth-input" placeholder="At least 8 characters" autocomplete="new-password">
+      <label class="auth-label">Confirm password</label>
+      <input type="password" id="signupPasswordConfirm" class="auth-input" placeholder="••••••••" autocomplete="new-password">
+      <div class="auth-error" id="signupError"></div>
+      <button class="auth-submit" onclick="handleSignup()">Create account</button>
+    </div>
+
+    <div class="auth-footnote">
+      Stored on this device only — not a secure or multi-device account system. See note below.
+    </div>
+  </div>
+</div>
+
+<div id="app" style="display:none;">
+  <aside id="sidebar"></aside>
+  <main id="main">
+    <div id="topbar">
+      <div id="mobileToggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</div>
+      <div>
+        <div class="topbar-crumb" id="crumb">AutomatePath</div>
+        <div class="topbar-title" id="topTitle">Dashboard</div>
+      </div>
+      <div style="flex:1;"></div>
+      <div class="user-chip" id="userChip" onclick="toggleUserMenu()">
+        <div class="user-avatar" id="userAvatar"></div>
+        <span id="userEmailLabel"></span>
+        <div class="user-menu" id="userMenu">
+          <div class="user-menu-item" onclick="handleLogout()">Log out</div>
+        </div>
+      </div>
+    </div>
+    <div id="content"></div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   DATA: CURRICULUM
+   ============================================================ */
+const CURRICULUM = [
+  {
+    id: 'm1', title: 'Foundations', icon: '1',
+    lessons: [
+      {id:'m1l1', title:'Manual vs automation testing', minutes:8, type:'lesson', body:`
+        <p>You already know how to test software. Automation testing doesn't replace that skill — it gives your existing test cases a way to run themselves, every time code changes, without you clicking through the app by hand.</p>
+        <h2>What actually changes</h2>
+        <p>In manual testing, you read a test case, open the app, and perform the steps yourself, comparing what you see to what you expected. In automation, you write a script that performs those same steps and that same comparison — and a tool runs that script for you.</p>
+        <ul>
+          <li><strong>You still design the test cases.</strong> That skill transfers directly.</li>
+          <li><strong>You still need to know what "correct" looks like.</strong> Automation only checks what you tell it to check.</li>
+          <li><strong>What's new</strong> is translating "click the login button" into code that finds the button and clicks it.</li>
+        </ul>
+        <h2>When automation helps (and when it doesn't)</h2>
+        <p>Automation pays off for tests you'll run repeatedly — regression suites, smoke tests, things you'd otherwise repeat every release. It's a poor fit for one-off exploratory testing, usability checks, or anything where you're judging "does this feel right," which still needs a human.</p>
+        <div class="callout tip"><div class="callout-label">Why this matters for you</div>Most automation engineers started exactly where you are. Your test-design instincts are the hard part — the coding is learnable in weeks.</div>
+      `},
+      {id:'m1l2', title:'How a browser actually works', minutes:7, type:'lesson', body:`
+        <p>Before automating a browser, it helps to understand what you're actually controlling.</p>
+        <h2>The DOM</h2>
+        <p>Every webpage is built from HTML, which the browser turns into a tree structure called the <code>DOM</code> (Document Object Model). Every button, input field, and paragraph is a "node" in that tree. When Playwright "clicks a button," it's really finding a specific node in this tree and simulating a click on it.</p>
+        <h2>Why this matters for automation</h2>
+        <p>Automation tools don't "see" a page the way you do. They don't recognize a blue button that says "Login" visually (by default). Instead, they search the DOM for an element matching criteria you give them — a tag, a label, an attribute, text content. This is called a <strong>locator</strong>, and it's the single most important concept in automation testing. You'll spend more time getting locators right than anything else.</p>
+        <div class="code-block">
+          <div class="code-block-head"><span>example.html</span></div>
+          <pre><span class="tok-kw">&lt;button</span> id<span class="tok-kw">=</span><span class="tok-str">"login-btn"</span> class<span class="tok-kw">=</span><span class="tok-str">"primary"</span><span class="tok-kw">&gt;</span>Log in<span class="tok-kw">&lt;/button&gt;</span></pre>
+        </div>
+        <p>To click this button, an automation script needs to identify it — by its <code>id</code>, its text "Log in", or its <code>class</code>. You'll practice this in the next lesson.</p>
+        <div class="callout"><div class="callout-label">Tip</div>Right-click any element on a real webpage and choose "Inspect" — you'll see this exact tree structure. Get comfortable poking around it.</div>
+      `},
+      {id:'m1l3', title:'Quiz: foundations', minutes:4, type:'quiz', quiz:[
+        {q:'What is the main thing that changes when moving from manual to automation testing?', opts:['Test case design is no longer needed','The steps you already perform manually get written as code that a tool executes','You stop needing to know what correct behavior looks like','Automation replaces the need for testers entirely'], correct:1, explain:'Test design knowledge fully transfers — what is new is expressing those steps as code.'},
+        {q:'What is the DOM?', opts:['A database that stores test results','The tree structure the browser builds from HTML, representing every element on the page','A type of automation framework','A programming language used in Playwright'], correct:1, explain:'The DOM is the structural representation of the page that automation tools search through to find elements.'},
+        {q:'What is a "locator" in automation testing?', opts:['A GPS feature in mobile testing','A way of identifying a specific element in the DOM so a script can interact with it','A tool for finding bugs','A type of test report'], correct:1, explain:'Locators are how scripts find elements (by id, text, role, etc.) before clicking, typing, or asserting on them.'}
+      ]}
+    ]
+  },
+  {
+    id: 'm2', title: 'Programming basics for testers', icon:'2',
+    lessons:[
+      {id:'m2l1', title:'Variables, types, and functions', minutes:9, type:'lesson', body:`
+        <p>You don't need a computer science degree to automate tests — you need a working grasp of a handful of concepts. We'll use JavaScript/TypeScript syntax since that's what Playwright uses natively.</p>
+        <h2>Variables</h2>
+        <p>A variable stores a value you'll use later — like a username you'll type into a login form.</p>
+        <div class="code-block"><div class="code-block-head"><span>script.ts</span></div><pre><span class="tok-kw">const</span> username = <span class="tok-str">"test_user@example.com"</span>;
+<span class="tok-kw">const</span> password = <span class="tok-str">"SecurePass123"</span>;
+<span class="tok-kw">const</span> loginAttempts = <span class="tok-fn">0</span>;</pre></div>
+        <p><code>const</code> means the value won't change. Use <code>let</code> if it will.</p>
+        <h2>Functions</h2>
+        <p>A function is a reusable block of steps — exactly like a reusable test procedure you'd write once and reference from multiple test cases.</p>
+        <div class="code-block"><div class="code-block-head"><span>script.ts</span></div><pre><span class="tok-kw">function</span> <span class="tok-fn">login</span>(user, pass) {
+  <span class="tok-cm">// steps to log in go here</span>
+}</pre></div>
+        <h2>Async/await — the one quirk to learn early</h2>
+        <p>Browser actions take time (a page has to load, a button has to appear). Playwright handles this with <code>async</code>/<code>await</code> — you'll see <code>await</code> before almost every action. Just think of it as "wait for this step to finish before moving to the next one," which is exactly what you do manually anyway.</p>
+        <div class="code-block"><div class="code-block-head"><span>script.ts</span></div><pre><span class="tok-kw">await</span> page.click(<span class="tok-str">'#login-btn'</span>);
+<span class="tok-kw">await</span> page.fill(<span class="tok-str">'#username'</span>, username);</pre></div>
+        <div class="callout tip"><div class="callout-label">Tip</div>You will not memorize all of this from one lesson. You'll absorb it by writing dozens of small scripts in the practice sandbox later in this course.</div>
+      `},
+      {id:'m2l2', title:'Conditionals and loops', minutes:7, type:'lesson', body:`
+        <h2>Conditionals</h2>
+        <p>Just like a manual test case might say "if the field is empty, expect an error message," code expresses this with <code>if</code>/<code>else</code>.</p>
+        <div class="code-block"><div class="code-block-head"><span>script.ts</span></div><pre><span class="tok-kw">if</span> (errorMessage.isVisible()) {
+  <span class="tok-cm">// test fails as expected</span>
+} <span class="tok-kw">else</span> {
+  <span class="tok-cm">// unexpected — flag this</span>
+}</pre></div>
+        <h2>Loops</h2>
+        <p>Loops repeat an action — useful for data-driven testing, like running the same login test with 5 different invalid passwords instead of writing 5 separate test cases.</p>
+        <div class="code-block"><div class="code-block-head"><span>script.ts</span></div><pre><span class="tok-kw">const</span> invalidPasswords = [<span class="tok-str">"123"</span>, <span class="tok-str">""</span>, <span class="tok-str">"short"</span>];
+<span class="tok-kw">for</span> (<span class="tok-kw">const</span> pwd <span class="tok-kw">of</span> invalidPasswords) {
+  <span class="tok-kw">await</span> page.fill(<span class="tok-str">'#password'</span>, pwd);
+  <span class="tok-cm">// assert error shown</span>
+}</pre></div>
+        <div class="callout"><div class="callout-label">Why this matters</div>This single pattern — looping over test data — is how automation handles in minutes what would take hours of repetitive manual clicking.</div>
+      `},
+      {id:'m2l3', title:'Quiz: programming basics', minutes:4, type:'quiz', quiz:[
+        {q:'What does `await` do before a Playwright action like `await page.click(...)`?', opts:['Skips the action if it fails','Tells the script to wait for that action to finish before continuing','Repeats the action 3 times','Deletes the element after clicking'], correct:1, explain:'await pauses execution until the asynchronous action (like a click or page load) completes.'},
+        {q:'Why are loops useful in automation testing?', opts:['They make code run faster','They let you run the same test logic across multiple data values without duplicating code','They are required by Playwright to function','They replace the need for assertions'], correct:1, explain:'Loops enable data-driven testing — running one test flow against many input values.'},
+        {q:'What is the JavaScript equivalent of a manual test case\'s "if the field is empty, expect an error"?', opts:['A loop','A variable','A conditional (if/else)','A function declaration'], correct:2, explain:'Conditionals (if/else) express branching logic, exactly like conditional steps in manual test cases.'}
+      ]}
+    ]
+  },
+  {
+    id: 'm3', title: 'Playwright fundamentals', icon:'3',
+    lessons:[
+      {id:'m3l1', title:'Installing and structuring a project', minutes:6, type:'lesson', body:`
+        <p>In a real environment, you'd install Playwright with a single command:</p>
+        <div class="code-block"><div class="code-block-head"><span>terminal</span></div><pre><span class="tok-cm">npm init playwright@latest</span></pre></div>
+        <p>This sets up a project with a config file, an example test, and installs the browser engines (Chromium, Firefox, WebKit) it controls. A typical project looks like this:</p>
+        <div class="code-block"><div class="code-block-head"><span>project structure</span></div><pre>my-tests/
+├── tests/
+│   └── login.spec.ts
+├── playwright.config.ts
+└── package.json</pre></div>
+        <p>Every test file ends in <code>.spec.ts</code> (or <code>.spec.js</code>). The config file controls things like which browsers to run against and how long to wait before timing out.</p>
+        <div class="callout"><div class="callout-label">Note</div>In this course's practice sandbox (next module), you'll write and run simplified Playwright-style code directly in your browser — no installation needed — so you can focus on learning the syntax and logic first.</div>
+      `},
+      {id:'m3l2', title:'Locators — finding elements', minutes:10, type:'lesson', body:`
+        <p>Locators are how your script finds the element it needs to interact with. Playwright gives you several strategies, ranked roughly from most to least recommended.</p>
+        <h2>1. Role-based (recommended)</h2>
+        <p>Finds elements the way a screen reader would — by their accessible role and name. This is the most resilient to UI changes.</p>
+        <div class="code-block"><div class="code-block-head"><span>locators.ts</span></div><pre>page.getByRole(<span class="tok-str">'button'</span>, { name: <span class="tok-str">'Log in'</span> })
+page.getByRole(<span class="tok-str">'textbox'</span>, { name: <span class="tok-str">'Email'</span> })</pre></div>
+        <h2>2. By label or placeholder text</h2>
+        <div class="code-block"><div class="code-block-head"><span>locators.ts</span></div><pre>page.getByLabel(<span class="tok-str">'Email address'</span>)
+page.getByPlaceholder(<span class="tok-str">'Enter your password'</span>)</pre></div>
+        <h2>3. By visible text</h2>
+        <div class="code-block"><div class="code-block-head"><span>locators.ts</span></div><pre>page.getByText(<span class="tok-str">'Forgot password?'</span>)</pre></div>
+        <h2>4. CSS selector (fallback)</h2>
+        <p>Use when nothing semantic is available. Less resilient — if a developer changes a class name, your test breaks even though nothing functionally changed.</p>
+        <div class="code-block"><div class="code-block-head"><span>locators.ts</span></div><pre>page.locator(<span class="tok-str">'#login-btn'</span>)
+page.locator(<span class="tok-str">'.submit-button'</span>)</pre></div>
+        <div class="callout warn"><div class="callout-label">Common mistake</div>New automation testers default to CSS selectors because they're familiar from "Inspect Element." Prefer role/label/text locators — they survive far more UI changes and read closer to how a real user finds things.</div>
+      `},
+      {id:'m3l3', title:'Actions — clicking, typing, navigating', minutes:8, type:'lesson', body:`
+        <p>Once you've located an element, you act on it. These are the core actions you'll use constantly:</p>
+        <div class="code-block"><div class="code-block-head"><span>actions.ts</span></div><pre><span class="tok-kw">await</span> page.goto(<span class="tok-str">'https://example.com/login'</span>);
+<span class="tok-kw">await</span> page.getByLabel(<span class="tok-str">'Email'</span>).fill(<span class="tok-str">'user@test.com'</span>);
+<span class="tok-kw">await</span> page.getByLabel(<span class="tok-str">'Password'</span>).fill(<span class="tok-str">'mypassword'</span>);
+<span class="tok-kw">await</span> page.getByRole(<span class="tok-str">'button'</span>, { name: <span class="tok-str">'Log in'</span> }).click();
+<span class="tok-kw">await</span> page.getByRole(<span class="tok-str">'checkbox'</span>).check();
+<span class="tok-kw">await</span> page.getByLabel(<span class="tok-str">'Country'</span>).selectOption(<span class="tok-str">'India'</span>);</pre></div>
+        <h2>Auto-waiting</h2>
+        <p>This is what makes Playwright much less frustrating than older tools. Before clicking, Playwright automatically waits for the element to be visible, stable, and able to receive events. You rarely need to manually add waits or sleeps — a common source of flaky tests in older frameworks.</p>
+        <div class="callout tip"><div class="callout-label">Tip</div>Try the practice sandbox in Module 4 to actually run these actions against a mock webpage and see them take effect.</div>
+      `},
+      {id:'m3l4', title:'Assertions — checking results', minutes:8, type:'lesson', body:`
+        <p>An action without a check isn't a test — it's just automation of clicking. The assertion is where you verify the application actually did what it should, exactly like comparing actual vs expected results manually.</p>
+        <div class="code-block"><div class="code-block-head"><span>assertions.ts</span></div><pre><span class="tok-kw">import</span> { expect } <span class="tok-kw">from</span> <span class="tok-str">'@playwright/test'</span>;
+
+<span class="tok-kw">await</span> expect(page.getByText(<span class="tok-str">'Welcome back'</span>)).toBeVisible();
+<span class="tok-kw">await</span> expect(page).toHaveURL(<span class="tok-str">'/dashboard'</span>);
+<span class="tok-kw">await</span> expect(page.getByRole(<span class="tok-str">'alert'</span>)).toContainText(<span class="tok-str">'Invalid password'</span>);
+<span class="tok-kw">await</span> expect(page.getByLabel(<span class="tok-str">'Email'</span>)).toHaveValue(<span class="tok-str">'user@test.com'</span>);</pre></div>
+        <p>These are called "web-first assertions" — like locators, they automatically retry for a few seconds until the condition is true or a timeout is reached, instead of failing instantly if the page hasn't updated yet.</p>
+        <div class="callout"><div class="callout-label">Mental model</div>Action = "do this." Assertion = "confirm this happened." Every meaningful test case has both, just like your manual test steps and expected results.</div>
+      `},
+      {id:'m3l5', title:'Quiz: Playwright fundamentals', minutes:5, type:'quiz', quiz:[
+        {q:'Which locator strategy is generally recommended first?', opts:['CSS class selectors','Role-based locators (getByRole)','XPath','Pixel coordinates'], correct:1, explain:'Role-based locators mimic how assistive technology and real users identify elements, making them more resilient to UI changes.'},
+        {q:'What does Playwright\'s "auto-waiting" do?', opts:['Automatically writes your test cases','Waits for elements to be visible/stable before acting on them, reducing the need for manual waits','Speeds up test execution by skipping steps','Waits for the user to manually approve each step'], correct:1, explain:'Auto-waiting handles timing issues automatically, which is a major source of flakiness in older automation tools.'},
+        {q:'What is the purpose of an assertion in an automated test?', opts:['To click a button','To verify the actual result matches the expected result','To install Playwright','To take a screenshot only'], correct:1, explain:'Assertions are how a test actually checks pass/fail — equivalent to comparing actual vs expected results manually.'},
+        {q:'Why are CSS selectors considered a fallback rather than first choice?', opts:['They are slower to execute','They are more likely to break when developers change class names, even if functionality is unchanged','They cannot be used with Playwright','They only work in Chrome'], correct:1, explain:'CSS selectors tie tests to implementation details that can change without affecting actual user-facing behavior.'}
+      ]}
+    ]
+  },
+  {
+    id:'m4', title:'Hands-on practice sandbox', icon:'4',
+    lessons:[
+      {id:'m4l1', title:'Sandbox: login flow', minutes:15, type:'sandbox', scenario:'login',
+       instructions:`Practice automating a login form. The mock site on the right behaves like a real page. Write Playwright-style code on the left and click Run.`,
+       tasks:['Navigate to the login page','Fill in the email field','Fill in the password field','Click the login button','Assert the welcome message is visible']},
+      {id:'m4l2', title:'Sandbox: form validation', minutes:15, type:'sandbox', scenario:'form',
+       instructions:`Practice testing validation logic — submitting incomplete data and asserting the correct error appears.`,
+       tasks:['Leave the email field empty','Click submit','Assert an error message is visible','Fill in a valid email','Assert the error disappears']},
+      {id:'m4l3', title:'Sandbox: dynamic table', minutes:15, type:'sandbox', scenario:'table',
+       instructions:`Practice locating and asserting on dynamic content like table rows, which is common in real dashboards.`,
+       tasks:['Locate the row containing "Playwright"','Assert the status column shows "Active"','Click the row\'s delete button','Assert the row is removed']}
+    ]
+  },
+  {
+    id:'m5', title:'Building real frameworks', icon:'5',
+    lessons:[
+      {id:'m5l1', title:'Page Object Model (POM)', minutes:9, type:'lesson', body:`
+        <p>As your test suite grows past a handful of scripts, repeating locators in every test file becomes a maintenance nightmare. The Page Object Model fixes this by giving each page its own class that owns its locators and actions.</p>
+        <div class="code-block"><div class="code-block-head"><span>pages/LoginPage.ts</span></div><pre><span class="tok-kw">class</span> LoginPage {
+  <span class="tok-fn">constructor</span>(page) { <span class="tok-kw">this</span>.page = page; }
+
+  <span class="tok-kw">async</span> <span class="tok-fn">login</span>(email, password) {
+    <span class="tok-kw">await</span> <span class="tok-kw">this</span>.page.getByLabel(<span class="tok-str">'Email'</span>).fill(email);
+    <span class="tok-kw">await</span> <span class="tok-kw">this</span>.page.getByLabel(<span class="tok-str">'Password'</span>).fill(password);
+    <span class="tok-kw">await</span> <span class="tok-kw">this</span>.page.getByRole(<span class="tok-str">'button'</span>, {name: <span class="tok-str">'Log in'</span>}).click();
+  }
+}</pre></div>
+        <div class="code-block"><div class="code-block-head"><span>tests/login.spec.ts</span></div><pre><span class="tok-kw">const</span> loginPage = <span class="tok-kw">new</span> LoginPage(page);
+<span class="tok-kw">await</span> loginPage.login(<span class="tok-str">'user@test.com'</span>, <span class="tok-str">'pass123'</span>);</pre></div>
+        <p>Now if the login form's structure changes, you fix it in one place — <code>LoginPage.ts</code> — instead of in every test that logs in.</p>
+        <div class="callout tip"><div class="callout-label">Why this matters</div>Nearly every real-world automation job will expect you to know POM. It's the single most commonly asked framework-design question in automation interviews.</div>
+      `},
+      {id:'m5l2', title:'Test data and fixtures', minutes:7, type:'lesson', body:`
+        <p>Hardcoding test data inside test files works for a demo, not for a real suite. Two common approaches:</p>
+        <h2>External data files</h2>
+        <div class="code-block"><div class="code-block-head"><span>data/users.json</span></div><pre>[
+  { <span class="tok-str">"email"</span>: <span class="tok-str">"valid@test.com"</span>, <span class="tok-str">"expected"</span>: <span class="tok-str">"success"</span> },
+  { <span class="tok-str">"email"</span>: <span class="tok-str">"bad-format"</span>, <span class="tok-str">"expected"</span>: <span class="tok-str">"error"</span> }
+]</pre></div>
+        <h2>Fixtures</h2>
+        <p>Playwright's fixture system lets you set up reusable state (like "a logged-in browser session") that any test can request, instead of repeating setup steps in every test.</p>
+        <div class="code-block"><div class="code-block-head"><span>fixtures.ts</span></div><pre><span class="tok-kw">const</span> test = base.extend({
+  loggedInPage: <span class="tok-kw">async</span> ({ page }, use) => {
+    <span class="tok-kw">await</span> page.goto(<span class="tok-str">'/login'</span>);
+    <span class="tok-cm">// perform login</span>
+    <span class="tok-kw">await</span> use(page);
+  }
+});</pre></div>
+        <div class="callout"><div class="callout-label">Mental model</div>Fixtures are like a standard "setup" step you'd write once at the top of a manual test plan, then reuse across many test cases.</div>
+      `},
+      {id:'m5l3', title:'CI/CD — running tests automatically', minutes:7, type:'lesson', body:`
+        <p>The real power of automation shows up when tests run themselves — every time someone pushes new code — instead of someone remembering to trigger them.</p>
+        <div class="code-block"><div class="code-block-head"><span>.github/workflows/tests.yml</span></div><pre><span class="tok-kw">on</span>: [push]
+<span class="tok-kw">jobs</span>:
+  test:
+    <span class="tok-kw">runs-on</span>: ubuntu-latest
+    <span class="tok-kw">steps</span>:
+      - <span class="tok-kw">uses</span>: actions/checkout@v4
+      - <span class="tok-kw">run</span>: npm ci
+      - <span class="tok-kw">run</span>: npx playwright install --with-deps
+      - <span class="tok-kw">run</span>: npx playwright test</pre></div>
+        <p>This config (for GitHub Actions) installs dependencies and runs your full Playwright suite automatically on every push. If a test fails, the team finds out within minutes — not at release time.</p>
+        <div class="callout tip"><div class="callout-label">Why this matters</div>"Can you set up CI?" is a common interview question. Even a basic GitHub Actions config like this one demonstrates real understanding.</div>
+      `},
+      {id:'m5l4', title:'API testing basics', minutes:8, type:'lesson', body:`
+        <p>Not everything needs a browser. Many bugs live in the API layer, and testing there is faster and more stable than UI tests. Playwright has a built-in request context for this.</p>
+        <div class="code-block"><div class="code-block-head"><span>api.spec.ts</span></div><pre><span class="tok-kw">const</span> response = <span class="tok-kw">await</span> request.post(<span class="tok-str">'/api/login'</span>, {
+  data: { email: <span class="tok-str">'user@test.com'</span>, password: <span class="tok-str">'pass123'</span> }
+});
+
+expect(response.status()).toBe(<span class="tok-fn">200</span>);
+<span class="tok-kw">const</span> body = <span class="tok-kw">await</span> response.json();
+expect(body.token).toBeDefined();</pre></div>
+        <h2>Why mix API and UI testing</h2>
+        <ul>
+          <li>API tests run in milliseconds vs seconds for UI tests.</li>
+          <li>Use API calls to set up state quickly (e.g., create a test user via API instead of manually filling a signup form before every test).</li>
+          <li>UI tests should focus on user-facing flows; let API tests cover backend logic and edge cases more cheaply.</li>
+        </ul>
+        <div class="callout"><div class="callout-label">Tip</div>A strong automation engineer blends API and UI tests rather than automating everything through the browser.</div>
+      `},
+      {id:'m5l5', title:'Quiz: building real frameworks', minutes:5, type:'quiz', quiz:[
+        {q:'What problem does the Page Object Model solve?', opts:['It makes tests run faster','It centralizes locators and actions for a page so changes only need to be updated in one place','It removes the need for assertions','It replaces the need for a test runner'], correct:1, explain:'POM avoids duplicating locators across many test files, making the suite easier to maintain.'},
+        {q:'What is a fixture used for in Playwright?', opts:['Styling the test report','Reusable setup/state (e.g. a logged-in session) that tests can request instead of repeating setup steps','A type of locator','A CI/CD pipeline tool'], correct:1, explain:'Fixtures provide reusable setup logic shared across tests.'},
+        {q:'Why test the API layer in addition to the UI?', opts:['API tests look better in reports','API tests are typically faster and more stable, and useful for setting up test state quickly','UI testing is being phased out','APIs do not need testing if the UI is tested'], correct:1, explain:'API tests are faster, more stable, and great for setup — UI tests should focus on real user flows.'}
+      ]}
+    ]
+  },
+  {
+    id:'m6', title:'Git & version control', icon:'6',
+    lessons:[
+      {id:'m6l1', title:'Why testers need Git', minutes:7, type:'lesson', body:`
+        <p>Once your tests are code, they live in the same version control system as the application code — almost always Git. You don't need to be a Git expert, but you do need the daily-use commands cold.</p>
+        <h2>The core workflow</h2>
+        <div class="code-block"><div class="code-block-head"><span>terminal</span></div><pre><span class="tok-cm"># get the latest code</span>
+git pull
+
+<span class="tok-cm"># create a branch for your new tests</span>
+git checkout -b add-checkout-tests
+
+<span class="tok-cm"># stage and commit your changes</span>
+git add tests/checkout.spec.ts
+git commit -m <span class="tok-str">"Add checkout flow test coverage"</span>
+
+<span class="tok-cm"># push it up and open a pull request</span>
+git push origin add-checkout-tests</pre></div>
+        <h2>Key concepts</h2>
+        <ul>
+          <li><strong>Repository (repo)</strong> — the project's full history, stored remotely (e.g. on GitHub) and locally on your machine.</li>
+          <li><strong>Branch</strong> — an isolated line of work. You build your test changes on a branch so you don't affect the main codebase until it's reviewed.</li>
+          <li><strong>Commit</strong> — a saved snapshot of your changes with a message describing what changed.</li>
+          <li><strong>Pull Request (PR)</strong> — a request to merge your branch into the main branch, usually reviewed by a teammate first.</li>
+        </ul>
+        <div class="callout tip"><div class="callout-label">Why this matters</div>Test automation is a team sport. Git is how your scripts get reviewed, merged, and run by everyone else — skipping it isn't an option in a real job.</div>
+      `},
+      {id:'m6l2', title:'Merge conflicts and resolving them', minutes:8, type:'lesson', body:`
+        <p>A merge conflict happens when two people change the same lines of a file in different ways, and Git can't automatically decide which version to keep.</p>
+        <div class="code-block"><div class="code-block-head"><span>tests/login.spec.ts</span></div><pre><span class="tok-cm">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span>
+await page.getByLabel(<span class="tok-str">'Email Address'</span>).fill(email);
+<span class="tok-cm">=======</span>
+await page.getByLabel(<span class="tok-str">'Email'</span>).fill(email);
+<span class="tok-cm">&gt;&gt;&gt;&gt;&gt;&gt;&gt; add-checkout-tests</span></pre></div>
+        <p>This means: your branch and the main branch both changed this line differently. You manually edit the file to keep the correct version, delete the conflict markers (<code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code>=======</code>, <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>), then commit the resolved file.</p>
+        <h2>Practical steps</h2>
+        <ol>
+          <li>Pull the latest main branch into yours: <code>git pull origin main</code></li>
+          <li>Open each conflicted file and decide which lines to keep</li>
+          <li>Remove the conflict markers</li>
+          <li><code>git add</code> the resolved files</li>
+          <li><code>git commit</code> to finalize the merge</li>
+        </ol>
+        <div class="callout warn"><div class="callout-label">Common mistake</div>Don't panic and delete your work. Conflicts are normal on active teams — read both versions carefully before choosing.</div>
+      `},
+      {id:'m6l3', title:'Quiz: Git & version control', minutes:4, type:'quiz', quiz:[
+        {q:'What is a branch used for in Git?', opts:['Permanently deleting old code','An isolated line of work so changes don\'t affect the main codebase until reviewed','A backup of the entire repository','A type of commit message'], correct:1, explain:'Branches let you work in isolation before merging changes into the shared main branch.'},
+        {q:'What causes a merge conflict?', opts:['Pushing too many commits at once','Two people changing the same lines of a file in different ways', 'Using the wrong branch name','Forgetting to write a commit message'], correct:1, explain:'Git can\'t automatically decide which version of conflicting lines to keep, so it asks you to resolve it manually.'},
+        {q:'What is a Pull Request (PR)?', opts:['A command to delete a branch','A request to merge your branch into another branch, usually after review','A type of automated test','A way to revert a commit'], correct:1, explain:'PRs are the standard way changes get reviewed and merged on team projects.'}
+      ]}
+    ]
+  },
+  {
+    id:'m7', title:'Selenium fundamentals', icon:'7',
+    lessons:[
+      {id:'m7l1', title:'What Selenium is and why it still matters', minutes:7, type:'lesson', body:`
+        <p>Selenium WebDriver is the original cross-browser automation tool, and it's still widely used — especially in large enterprises with mature, long-running test suites built years before Playwright existed. Many job postings still list it explicitly, so it's worth knowing even if you primarily work in Playwright.</p>
+        <h2>How it differs from Playwright</h2>
+        <ul>
+          <li><strong>No built-in auto-waiting</strong> — you often need explicit waits, which is a common source of flaky Selenium tests.</li>
+          <li><strong>Separate driver binaries</strong> — Selenium talks to browsers through a driver executable (e.g. chromedriver) that must match your browser version.</li>
+          <li><strong>Broader language support</strong> — Java, Python, C#, Ruby, JavaScript all have mature Selenium bindings, with Java being the most common in enterprise settings.</li>
+        </ul>
+        <h2>Basic structure (Java + TestNG, the most common combo)</h2>
+        <div class="code-block"><div class="code-block-head"><span>LoginTest.java</span></div><pre>WebDriver driver = <span class="tok-kw">new</span> ChromeDriver();
+driver.get(<span class="tok-str">"https://example.com/login"</span>);
+
+driver.findElement(By.id(<span class="tok-str">"email"</span>)).sendKeys(<span class="tok-str">"user@test.com"</span>);
+driver.findElement(By.id(<span class="tok-str">"password"</span>)).sendKeys(<span class="tok-str">"pass123"</span>);
+driver.findElement(By.id(<span class="tok-str">"login-btn"</span>)).click();
+
+WebElement welcome = driver.findElement(By.id(<span class="tok-str">"welcome-msg"</span>));
+Assert.assertTrue(welcome.isDisplayed());</pre></div>
+        <div class="callout"><div class="callout-label">Mental model</div>The concepts you already learned — locators, actions, assertions — transfer directly. Selenium is mostly a different syntax for the same ideas, with more manual wait-handling.</div>
+      `},
+      {id:'m7l2', title:'Explicit waits in Selenium', minutes:8, type:'lesson', body:`
+        <p>Because Selenium doesn't auto-wait the way Playwright does, you need to explicitly tell it to wait for an element before interacting — otherwise your test can fail simply because the page hadn't finished loading yet.</p>
+        <div class="code-block"><div class="code-block-head"><span>LoginTest.java</span></div><pre>WebDriverWait wait = <span class="tok-kw">new</span> WebDriverWait(driver, Duration.ofSeconds(10));
+WebElement loginBtn = wait.until(
+  ExpectedConditions.elementToBeClickable(By.id(<span class="tok-str">"login-btn"</span>))
+);
+loginBtn.click();</pre></div>
+        <h2>The anti-pattern to avoid</h2>
+        <p>New Selenium users often reach for hardcoded sleeps:</p>
+        <div class="code-block"><div class="code-block-head"><span>bad practice</span></div><pre>Thread.sleep(<span class="tok-fn">5000</span>); <span class="tok-cm">// avoid this</span></pre></div>
+        <p>This either wastes time (waiting 5 seconds when the element appeared in 1) or still fails intermittently (when the page is slower than 5 seconds on a bad day). Explicit waits that poll for a condition are almost always the better choice.</p>
+        <div class="callout warn"><div class="callout-label">Interview tip</div>"How do you handle flaky waits in Selenium?" is a very common interview question. The answer is always explicit waits, never <code>Thread.sleep</code>.</div>
+      `},
+      {id:'m7l3', title:'Quiz: Selenium fundamentals', minutes:4, type:'quiz', quiz:[
+        {q:'What is a key difference between Selenium and Playwright?', opts:['Selenium can only test mobile apps','Selenium does not auto-wait by default, often requiring explicit waits','Playwright cannot run in Chrome','Selenium does not support Java'], correct:1, explain:'Lack of built-in auto-waiting is a major source of flaky Selenium tests compared to Playwright.'},
+        {q:'Why is `Thread.sleep()` considered bad practice for waits?', opts:['It is not supported in Java','It either wastes time or still fails intermittently on slower loads, instead of waiting for an actual condition', 'It only works in Chrome','It deletes the browser session'], correct:1, explain:'Hardcoded sleeps are not actually tied to page state, making them unreliable and inefficient.'},
+        {q:'Why is Selenium still relevant despite newer tools like Playwright?', opts:['It is faster than Playwright','Many large enterprises have mature existing Selenium suites and it remains commonly requested in job postings','It is the only tool that supports JavaScript','Playwright cannot test login forms'], correct:1, explain:'Legacy enterprise codebases and job market demand keep Selenium relevant alongside newer tools.'}
+      ]}
+    ]
+  },
+  {
+    id:'m8', title:'BDD with Cucumber', icon:'8',
+    lessons:[
+      {id:'m8l1', title:'Gherkin syntax and feature files', minutes:8, type:'lesson', body:`
+        <p>Behavior-Driven Development (BDD) writes test scenarios in plain language that both testers and non-technical stakeholders (product managers, business analysts) can read and agree on, before any code is written.</p>
+        <h2>Gherkin syntax</h2>
+        <p>Gherkin is the structured plain-English format used to write these scenarios, stored in <code>.feature</code> files.</p>
+        <div class="code-block"><div class="code-block-head"><span>login.feature</span></div><pre><span class="tok-kw">Feature:</span> User login
+
+  <span class="tok-kw">Scenario:</span> Successful login with valid credentials
+    <span class="tok-kw">Given</span> I am on the login page
+    <span class="tok-kw">When</span> I enter a valid email and password
+    <span class="tok-kw">And</span> I click the login button
+    <span class="tok-kw">Then</span> I should see a welcome message
+
+  <span class="tok-kw">Scenario:</span> Login fails with invalid password
+    <span class="tok-kw">Given</span> I am on the login page
+    <span class="tok-kw">When</span> I enter a valid email and an invalid password
+    <span class="tok-kw">And</span> I click the login button
+    <span class="tok-kw">Then</span> I should see an error message</pre></div>
+        <p>Each line maps to a "step definition" — actual code that performs that step, usually written in Playwright or Selenium underneath.</p>
+        <div class="code-block"><div class="code-block-head"><span>steps/login.steps.ts</span></div><pre>Given(<span class="tok-str">'I am on the login page'</span>, <span class="tok-kw">async</span> () =&gt; {
+  <span class="tok-kw">await</span> page.goto(<span class="tok-str">'/login'</span>);
+});
+
+When(<span class="tok-str">'I enter a valid email and password'</span>, <span class="tok-kw">async</span> () =&gt; {
+  <span class="tok-kw">await</span> page.getByLabel(<span class="tok-str">'Email'</span>).fill(<span class="tok-str">'user@test.com'</span>);
+  <span class="tok-kw">await</span> page.getByLabel(<span class="tok-str">'Password'</span>).fill(<span class="tok-str">'validPass123'</span>);
+});</pre></div>
+        <div class="callout tip"><div class="callout-label">Why this matters</div>BDD is common in teams practicing agile/Scrum where product owners need to read and approve test scenarios without reading code. It's a frequently requested skill in QA job listings, separate from any specific tool.</div>
+      `},
+      {id:'m8l2', title:'Reusing steps and scenario outlines', minutes:7, type:'lesson', body:`
+        <p>Cucumber's real efficiency comes from reusing step definitions across many scenarios, and parameterizing scenarios with different data.</p>
+        <h2>Scenario Outline — data-driven BDD</h2>
+        <div class="code-block"><div class="code-block-head"><span>login.feature</span></div><pre><span class="tok-kw">Scenario Outline:</span> Login fails with invalid credentials
+    <span class="tok-kw">Given</span> I am on the login page
+    <span class="tok-kw">When</span> I enter "&lt;email&gt;" and "&lt;password&gt;"
+    <span class="tok-kw">And</span> I click the login button
+    <span class="tok-kw">Then</span> I should see "&lt;message&gt;"
+
+    <span class="tok-kw">Examples:</span>
+      | email            | password | message              |
+      | user@test.com    |          | Password is required |
+      |                  | pass123  | Email is required    |
+      | not-an-email     | pass123  | Invalid email format |</pre></div>
+        <p>This single scenario runs three times, once per row in the table — equivalent to writing three nearly-identical manual test cases, but in one readable block.</p>
+        <div class="callout"><div class="callout-label">Mental model</div>Step definitions are like reusable functions. Once "I am on the login page" is defined, every feature file in the project can reuse it without rewriting the underlying code.</div>
+      `},
+      {id:'m8l3', title:'Quiz: BDD with Cucumber', minutes:4, type:'quiz', quiz:[
+        {q:'What is the main purpose of Gherkin/BDD syntax?', opts:['To make tests run faster','To write test scenarios in plain language that both technical and non-technical stakeholders can read and agree on','To replace the need for assertions','To automatically generate test data'], correct:1, explain:'BDD bridges the communication gap between testers, developers, and business stakeholders using shared, readable scenarios.'},
+        {q:'What does a "Scenario Outline" with an Examples table do?', opts:['Deletes duplicate scenarios','Runs the same scenario multiple times with different data values from the table','Generates a bug report','Only works with Selenium, not Playwright'], correct:1, explain:'Scenario Outlines enable data-driven testing within readable Gherkin syntax.'},
+        {q:'What connects a Gherkin step like "Given I am on the login page" to actual test code?', opts:['A CSS selector','A step definition function that matches the step text and performs the action', 'The Feature file itself executes directly','An API key'], correct:1, explain:'Step definitions map Gherkin steps to real automation code (e.g. Playwright or Selenium commands).'}
+      ]}
+    ]
+  },
+  {
+    id:'m9', title:'Advanced Playwright', icon:'9',
+    lessons:[
+      {id:'m9l1', title:'Network interception and mocking', minutes:9, type:'lesson', body:`
+        <p>Real applications depend on APIs that can be slow, flaky, or hard to put into a specific state (e.g. testing an error from a payment provider). Playwright lets you intercept and control network requests directly, without touching the real backend.</p>
+        <div class="code-block"><div class="code-block-head"><span>mocking.spec.ts</span></div><pre><span class="tok-cm">// Force an API call to return a specific response</span>
+<span class="tok-kw">await</span> page.route(<span class="tok-str">'**/api/payment'</span>, route =&gt; {
+  route.fulfill({
+    status: <span class="tok-fn">500</span>,
+    body: JSON.stringify({ error: <span class="tok-str">'Payment service unavailable'</span> })
+  });
+});
+
+<span class="tok-kw">await</span> page.getByRole(<span class="tok-str">'button'</span>, { name: <span class="tok-str">'Pay now'</span> }).click();
+<span class="tok-kw">await</span> expect(page.getByText(<span class="tok-str">'Payment service unavailable'</span>)).toBeVisible();</pre></div>
+        <h2>Why this matters</h2>
+        <ul>
+          <li>Test error states (500s, timeouts, malformed responses) that are hard to trigger from a real backend on demand.</li>
+          <li>Speed up tests by mocking slow third-party APIs (analytics, payment gateways) instead of waiting on them.</li>
+          <li>Test the frontend in isolation from backend availability — useful in CI where a backend service might be down.</li>
+        </ul>
+        <div class="callout tip"><div class="callout-label">Interview relevance</div>"How would you test what happens when an API fails?" is a common senior-level automation interview question. Network mocking is the answer.</div>
+      `},
+      {id:'m9l2', title:'Visual regression testing', minutes:7, type:'lesson', body:`
+        <p>Some bugs are purely visual — a button that overlaps text, a layout that breaks on a smaller screen — and won't be caught by functional assertions alone. Visual regression testing compares screenshots against a saved baseline.</p>
+        <div class="code-block"><div class="code-block-head"><span>visual.spec.ts</span></div><pre><span class="tok-kw">await</span> page.goto(<span class="tok-str">'/dashboard'</span>);
+<span class="tok-kw">await</span> expect(page).toHaveScreenshot(<span class="tok-str">'dashboard.png'</span>);</pre></div>
+        <p>The first run saves a baseline image. Every future run compares the current page against that baseline pixel-by-pixel, and fails if the difference exceeds a configurable threshold.</p>
+        <h2>Where this fits</h2>
+        <ul>
+          <li>Use sparingly — on key pages/components, not every test, since visual diffs need manual review when intentional UI changes happen.</li>
+          <li>Pair with functional tests rather than replacing them — visual tests catch layout bugs, not logic bugs.</li>
+        </ul>
+        <div class="callout warn"><div class="callout-label">Common pitfall</div>Visual tests can be flaky across operating systems and font rendering differences. Most teams run them only in a consistent CI environment (e.g. always the same Docker image), not on developers' local machines.</div>
+      `},
+      {id:'m9l3', title:'Auth state reuse and parallel execution', minutes:8, type:'lesson', body:`
+        <p>Two practical techniques that separate a slow test suite from a fast one.</p>
+        <h2>Reusing login state</h2>
+        <p>Logging in through the UI before every single test is slow and repetitive. Playwright lets you log in once, save the session, and reuse it across many tests.</p>
+        <div class="code-block"><div class="code-block-head"><span>global-setup.ts</span></div><pre><span class="tok-kw">await</span> page.goto(<span class="tok-str">'/login'</span>);
+<span class="tok-kw">await</span> page.getByLabel(<span class="tok-str">'Email'</span>).fill(<span class="tok-str">'user@test.com'</span>);
+<span class="tok-kw">await</span> page.getByLabel(<span class="tok-str">'Password'</span>).fill(<span class="tok-str">'pass123'</span>);
+<span class="tok-kw">await</span> page.getByRole(<span class="tok-str">'button'</span>, {name: <span class="tok-str">'Log in'</span>}).click();
+<span class="tok-kw">await</span> page.context().storageState({ path: <span class="tok-str">'auth.json'</span> });</pre></div>
+        <p>Every test file can then start already logged in by loading <code>auth.json</code>, instead of repeating the login flow dozens of times.</p>
+        <h2>Parallel execution</h2>
+        <p>Playwright runs test files in parallel across multiple workers by default, dramatically cutting total suite runtime.</p>
+        <div class="code-block"><div class="code-block-head"><span>playwright.config.ts</span></div><pre><span class="tok-kw">export default</span> {
+  workers: <span class="tok-fn">4</span>, <span class="tok-cm">// run 4 test files at once</span>
+  fullyParallel: <span class="tok-kw">true</span>
+};</pre></div>
+        <div class="callout"><div class="callout-label">Why this matters</div>A 200-test suite that takes 40 minutes sequentially might take 10 minutes across 4 parallel workers — directly affecting how fast your team gets feedback after pushing code.</div>
+      `},
+      {id:'m9l4', title:'Debugging flaky tests', minutes:7, type:'lesson', body:`
+        <p>Even with auto-waiting, tests sometimes fail inconsistently — passing locally, failing in CI, or failing only sometimes. Diagnosing this is a core automation engineering skill.</p>
+        <h2>Common causes of flakiness</h2>
+        <ul>
+          <li><strong>Race conditions</strong> — asserting before an async action (like an API call triggered by a click) has actually finished.</li>
+          <li><strong>Hardcoded waits</strong> — timing that works on a fast machine but not a loaded CI runner.</li>
+          <li><strong>Shared test state</strong> — tests that depend on data left behind by a previous test, breaking when run in a different order.</li>
+          <li><strong>Non-deterministic locators</strong> — locators that accidentally match multiple elements depending on dynamic content.</li>
+        </ul>
+        <h2>Playwright's debugging tools</h2>
+        <div class="code-block"><div class="code-block-head"><span>terminal</span></div><pre><span class="tok-cm"># run with the Trace Viewer enabled</span>
+npx playwright test --trace on
+
+<span class="tok-cm"># open a failed test's trace</span>
+npx playwright show-trace trace.zip</pre></div>
+        <p>The Trace Viewer shows a full timeline of every action, network request, console log, and DOM snapshot — letting you see exactly what the page looked like at the moment a test failed.</p>
+        <div class="callout tip"><div class="callout-label">Interview tip</div>"Tell me how you'd debug a flaky test" is one of the most common automation interview questions. A strong answer mentions isolating test state, checking for race conditions, and using trace/video artifacts from CI — not just "I'd rerun it."</div>
+      `},
+      {id:'m9l5', title:'Quiz: advanced Playwright', minutes:5, type:'quiz', quiz:[
+        {q:'Why would you use network interception/mocking in a test?', opts:['To make tests run in a different browser','To simulate hard-to-trigger conditions like API errors, or to avoid depending on slow/unreliable third-party services','To skip writing assertions','To automatically fix bugs'], correct:1, explain:'Mocking lets you control backend responses directly, including error states that are difficult to trigger for real.'},
+        {q:'What does visual regression testing catch that functional assertions might miss?', opts:['Backend logic errors','Purely visual/layout bugs, like overlapping elements or broken layouts','API failures','Database errors'], correct:1, explain:'Visual regression testing compares rendered screenshots, catching layout issues that pass/fail logic checks would miss.'},
+        {q:'Why reuse saved authentication state across tests?', opts:['It is required by Playwright','It avoids repeating a slow UI login flow in every single test, saving significant suite runtime', 'It is the only way to test logged-in pages','It disables parallel execution'], correct:1, explain:'Reusing storageState skips redundant login steps across many tests, which adds up significantly at scale.'},
+        {q:'Which of these is NOT a common cause of flaky tests?', opts:['Race conditions between actions and async results','Shared state between tests run in different orders','Using Playwright\'s built-in auto-waiting for actions','Hardcoded sleep timings that don\'t match CI performance'], correct:2, explain:'Auto-waiting reduces flakiness — it is not a cause of it. The other three are classic sources of flaky tests.'}
+      ]}
+    ]
+  },
+  {
+    id:'m10', title:'Testing engineering practices', icon:'10',
+    lessons:[
+      {id:'m10l1', title:'SQL basics for backend validation', minutes:9, type:'lesson', body:`
+        <p>Not every check belongs in the UI. Sometimes the fastest way to verify a test's outcome is to query the database directly — e.g. confirming a new user record was actually created after a signup test, rather than just trusting what the UI displayed.</p>
+        <h2>Core queries every tester should know</h2>
+        <div class="code-block"><div class="code-block-head"><span>SQL</span></div><pre><span class="tok-kw">SELECT</span> * <span class="tok-kw">FROM</span> users <span class="tok-kw">WHERE</span> email = <span class="tok-str">'test_user@example.com'</span>;
+
+<span class="tok-kw">SELECT</span> COUNT(*) <span class="tok-kw">FROM</span> orders <span class="tok-kw">WHERE</span> status = <span class="tok-str">'pending'</span>;
+
+<span class="tok-kw">SELECT</span> u.email, o.total
+<span class="tok-kw">FROM</span> users u
+<span class="tok-kw">JOIN</span> orders o <span class="tok-kw">ON</span> u.id = o.user_id
+<span class="tok-kw">WHERE</span> o.created_at > <span class="tok-str">'2026-01-01'</span>;</pre></div>
+        <h2>Using this in automation</h2>
+        <p>You can run these queries directly from a test to set up data quickly or verify backend state, instead of relying purely on what's rendered in the UI:</p>
+        <div class="code-block"><div class="code-block-head"><span>db-check.spec.ts</span></div><pre><span class="tok-kw">const</span> result = <span class="tok-kw">await</span> db.query(
+  <span class="tok-str">"SELECT * FROM users WHERE email = $1"</span>, [testEmail]
+);
+expect(result.rows.length).toBe(<span class="tok-fn">1</span>);</pre></div>
+        <div class="callout"><div class="callout-label">Why this matters</div>Pure UI assertions only confirm what's displayed, not what's actually stored. Combining UI and database checks gives you more confidence that a feature truly worked end-to-end.</div>
+      `},
+      {id:'m10l2', title:'Test reporting tools', minutes:6, type:'lesson', body:`
+        <p>A test suite that passes silently isn't useful to a team — reports turn raw pass/fail data into something a whole team (including non-technical stakeholders) can review quickly.</p>
+        <h2>Common reporting tools</h2>
+        <ul>
+          <li><strong>Playwright's built-in HTML reporter</strong> — generates a browsable report with screenshots, traces, and timing for every test, enabled by default in most setups.</li>
+          <li><strong>Allure</strong> — a more polished, framework-agnostic reporting tool used across many languages (Java, Python, JS), often integrated into CI dashboards.</li>
+          <li><strong>Extent Reports</strong> — popular in Java/Selenium projects, generates detailed HTML reports with logs and screenshots per step.</li>
+        </ul>
+        <div class="code-block"><div class="code-block-head"><span>terminal</span></div><pre><span class="tok-cm"># generate and open Playwright's HTML report</span>
+npx playwright show-report</pre></div>
+        <div class="callout tip"><div class="callout-label">Why this matters</div>In a real job, your manager or a product owner will often look at the report, not your code. A clear, well-organized report is part of doing the job well — not an afterthought.</div>
+      `},
+      {id:'m10l3', title:'Risk-based testing and coverage strategy', minutes:8, type:'lesson', body:`
+        <p>Automating everything isn't realistic or even desirable. Knowing what to automate — and what to leave manual — is a skill in itself, and a strong signal of seniority in interviews.</p>
+        <h2>What to prioritize for automation</h2>
+        <ul>
+          <li><strong>High-frequency, repetitive flows</strong> — login, checkout, core navigation — run on every release.</li>
+          <li><strong>High-risk areas</strong> — payment processing, data integrity, anything with legal/compliance implications.</li>
+          <li><strong>Regression-prone areas</strong> — features that have broken before are likely to break again.</li>
+        </ul>
+        <h2>What to leave manual (or deprioritize)</h2>
+        <ul>
+          <li>One-off or rarely used features.</li>
+          <li>Highly visual/subjective UX checks ("does this feel intuitive").</li>
+          <li>Exploratory testing — automation only checks what you already thought to check; it can't discover unknown bugs the way a human exploring the app can.</li>
+        </ul>
+        <h2>The testing pyramid</h2>
+        <p>A widely referenced model for balancing test types: many fast, cheap unit tests at the base, fewer integration/API tests in the middle, and a small number of slower, more expensive UI end-to-end tests at the top. As a tester, you'll mostly live in the top two layers, but understanding the full pyramid helps you argue for the right kind of test for a given bug.</p>
+        <div class="callout"><div class="callout-label">Interview tip</div>"What would you NOT automate?" is a common senior-level question, specifically to check if a candidate over-automates without judgment.</div>
+      `},
+      {id:'m10l4', title:'Quiz: testing engineering practices', minutes:5, type:'quiz', quiz:[
+        {q:'Why might a test query the database directly instead of only checking the UI?', opts:['It is required by Playwright','To verify backend state was actually changed, not just what is displayed on screen', 'It makes tests run faster than UI checks always','Database checks replace the need for UI tests entirely'], correct:1, explain:'UI assertions only confirm what is rendered — database checks confirm the underlying data was actually correct.'},
+        {q:'What is the testing pyramid generally recommending?', opts:['Equal numbers of every test type','Many fast unit tests at the base, fewer integration tests, and the fewest slow UI end-to-end tests at the top', 'Only UI tests are necessary','Unit tests should be avoided in favor of UI tests'], correct:1, explain:'The pyramid favors cheaper, faster tests at lower levels and reserves slower UI tests for critical end-to-end flows.'},
+        {q:'Which is a good candidate to leave as manual/exploratory testing rather than automate?', opts:['The login flow run on every release','Subjective UX judgment, like whether a redesign "feels" intuitive','Core checkout regression tests','High-risk payment processing flows'], correct:1, explain:'Automation checks only what you tell it to check — subjective human judgment calls are still best done manually.'}
+      ]}
+    ]
+  },
+  {
+    id:'m11', title:'Career prep', icon:'11',
+    lessons:[
+      {id:'m11l1', title:'Building a portfolio that gets interviews', minutes:8, type:'lesson', body:`
+        <p>For a manual tester moving into automation, a public GitHub portfolio is often more persuasive than a certificate — it's proof you can actually do the work.</p>
+        <h2>What a strong portfolio repo includes</h2>
+        <ul>
+          <li>A clear README explaining what the project tests and how to run it.</li>
+          <li>A real Page Object Model structure, not just flat test scripts.</li>
+          <li>A mix of UI and API tests.</li>
+          <li>A working CI pipeline (GitHub Actions) — a green checkmark badge is a strong, immediate signal.</li>
+          <li>At least one example of data-driven testing (looping over multiple test cases/data sets).</li>
+        </ul>
+        <h2>A realistic project structure</h2>
+        <div class="code-block"><div class="code-block-head"><span>project structure</span></div><pre>portfolio-tests/
+├── .github/workflows/tests.yml
+├── pages/
+│   ├── LoginPage.ts
+│   └── CheckoutPage.ts
+├── tests/
+│   ├── login.spec.ts
+│   ├── checkout.spec.ts
+│   └── api/orders.spec.ts
+├── test-data/
+│   └── users.json
+├── playwright.config.ts
+└── README.md</pre></div>
+        <div class="callout tip"><div class="callout-label">Tip</div>Pick one small public site or demo app and automate it thoroughly rather than many sites shallowly — depth reads as competence, breadth without depth reads as copy-pasted tutorials.</div>
+      `},
+      {id:'m11l2', title:'Common interview questions and how to answer them', minutes:9, type:'lesson', body:`
+        <p>Automation interviews tend to reuse a fairly predictable set of questions. Here's what's actually being tested behind each one.</p>
+        <h2>"Walk me through your test automation framework."</h2>
+        <p>They want to hear: Page Object Model, how you handle test data, how CI runs your tests, and how you report results. Structure your answer in that order.</p>
+        <h2>"How do you handle flaky tests?"</h2>
+        <p>Mention identifying race conditions, avoiding hardcoded waits, isolating test state between runs, and using debugging tools like Playwright's Trace Viewer — not just "I rerun it."</p>
+        <h2>"What would you NOT automate?"</h2>
+        <p>This checks for judgment, not tool knowledge. Reference risk-based prioritization: high-frequency/high-risk flows get automated; one-off, subjective, or rarely-used flows often don't.</p>
+        <h2>"How do you decide what to test for a new feature?"</h2>
+        <p>This is really a manual-testing question in disguise — your existing skill. Mention requirements analysis, edge cases, boundary values, and risk areas, then how you'd translate the highest-value cases into automated coverage.</p>
+        <h2>"CSS selector vs role-based locator — which do you prefer and why?"</h2>
+        <p>Role-based locators (or similar semantic locators in other tools) are more resilient to UI changes since they reflect what a user actually perceives, not implementation details like class names.</p>
+        <div class="callout"><div class="callout-label">Why this matters</div>Notice how many of these questions reward your manual testing background directly. You are not starting from zero in these interviews — you're translating expertise you already have.</div>
+      `},
+      {id:'m11l3', title:'Quiz: career prep', minutes:4, type:'quiz', quiz:[
+        {q:'What is often more persuasive to an interviewer than a certificate?', opts:['A long list of tools mentioned on a resume','A public portfolio repo showing real, working automation code with CI', 'Years of manual testing experience alone','A high score on a multiple-choice quiz'], correct:1, explain:'Demonstrated, working code is direct evidence of capability, which interviewers weigh heavily.'},
+        {q:'When asked "What would you NOT automate?", what is the interviewer really evaluating?', opts:['Whether you know every Playwright API method','Your judgment about risk-based prioritization, not just tool knowledge', 'Whether you can write Selenium code','Your typing speed'], correct:1, explain:'This question checks for engineering judgment about where automation actually adds value.'},
+        {q:'Why does a manual testing background help in automation interviews?', opts:['It doesn\'t — automation is a completely separate skill set','Many interview questions (requirements analysis, edge cases, risk prioritization) directly reuse manual testing skills', 'Manual testers are not expected to answer technical questions','Interviewers prefer candidates with no coding background'], correct:1, explain:'Test design and risk judgment transfer directly — automation interviews often test this alongside tool-specific knowledge.'}
+      ]}
+    ]
+  }
+];
+
+/* ============================================================
+   END CURRICULUM EXPANSION
+   ============================================================ */
+
+/* ============================================================
+   SANDBOX SCENARIOS
+   ============================================================ */
+const SANDBOX_SCENARIOS = {
+  login: {
+    html:`
+      <div style="max-width:320px;margin:0 auto;">
+        <h3 style="margin-bottom:14px;font-size:15px;">Sign in</h3>
+        <label style="font-size:12px;color:#555;display:block;margin-bottom:4px;">Email</label>
+        <input data-testid="email-input" data-role="textbox" data-name="Email" placeholder="Email" style="width:100%;padding:8px;margin-bottom:10px;border:1px solid #ccc;border-radius:6px;font-size:13px;">
+        <label style="font-size:12px;color:#555;display:block;margin-bottom:4px;">Password</label>
+        <input data-testid="password-input" data-role="textbox" data-name="Password" type="password" placeholder="Password" style="width:100%;padding:8px;margin-bottom:14px;border:1px solid #ccc;border-radius:6px;font-size:13px;">
+        <button data-testid="login-btn" data-role="button" data-name="Log in" style="width:100%;padding:9px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;">Log in</button>
+        <div data-testid="welcome-msg" data-role="status" style="display:none;margin-top:14px;padding:10px;background:#ecfdf5;color:#065f46;border-radius:6px;font-size:13px;">Welcome back, test_user!</div>
+      </div>`,
+    initState:{},
+    run:(code, state, log)=>{
+      const fns = parseActions(code);
+      let emailFilled=false, passwordFilled=false, clicked=false;
+      fns.forEach(action=>{
+        if(action.type==='fill' && /email/i.test(action.target)){ emailFilled=true; log(`Filled email field with "${action.value}"`, true); highlight('email-input'); }
+        else if(action.type==='fill' && /password/i.test(action.target)){ passwordFilled=true; log(`Filled password field with "${action.value}"`, true); highlight('password-input'); }
+        else if(action.type==='click' && /log\s*in/i.test(action.target)){
+          clicked=true;
+          if(emailFilled && passwordFilled){
+            document.getElementById('welcome-msg') && (document.getElementById('welcome-msg').style.display='block');
+            log('Clicked "Log in" button', true);
+          } else {
+            log('Clicked "Log in" button (form incomplete)', true);
+          }
+          highlight('login-btn');
+        }
+        else if(action.type==='assertVisible' && /welcome/i.test(action.target)){
+          const visible = emailFilled && passwordFilled && clicked;
+          log(visible ? 'PASS: Welcome message is visible' : 'FAIL: Welcome message was not visible', visible);
+        }
+        else if(action.type==='goto'){ log(`Navigated to ${action.value}`, true); }
+      });
+      if(fns.length===0) log('No recognized Playwright actions found in your code.', false);
+    }
+  },
+  form:{
+    html:`
+      <div style="max-width:320px;margin:0 auto;">
+        <h3 style="margin-bottom:14px;font-size:15px;">Newsletter sign-up</h3>
+        <label style="font-size:12px;color:#555;display:block;margin-bottom:4px;">Email</label>
+        <input data-testid="email-input" data-role="textbox" data-name="Email" placeholder="you@example.com" style="width:100%;padding:8px;margin-bottom:6px;border:1px solid #ccc;border-radius:6px;font-size:13px;">
+        <div data-testid="error-msg" data-role="alert" style="display:none;color:#b91c1c;font-size:12px;margin-bottom:10px;">Email is required</div>
+        <button data-testid="submit-btn" data-role="button" data-name="Submit" style="width:100%;padding:9px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;margin-top:6px;">Submit</button>
+      </div>`,
+    initState:{},
+    run:(code, state, log)=>{
+      const fns = parseActions(code);
+      let emailValue='';
+      fns.forEach(action=>{
+        if(action.type==='fill' && /email/i.test(action.target)){ emailValue=action.value; log(`Filled email field with "${action.value||'(empty)'}"`, true); highlight('email-input'); }
+        else if(action.type==='click' && /submit/i.test(action.target)){
+          const err = document.getElementById('error-msg');
+          if(!emailValue){ err.style.display='block'; log('Clicked Submit — validation triggered', true); }
+          else { err.style.display='none'; log('Clicked Submit — form valid', true); }
+          highlight('submit-btn');
+        }
+        else if(action.type==='assertVisible' && /error/i.test(action.target)){
+          const visible = !emailValue;
+          log(visible ? 'PASS: Error message is visible' : 'FAIL: Error message was not visible', visible);
+        }
+        else if(action.type==='assertHidden' && /error/i.test(action.target)){
+          const hidden = !!emailValue;
+          log(hidden ? 'PASS: Error message is hidden' : 'FAIL: Error message still visible', hidden);
+        }
+      });
+      if(fns.length===0) log('No recognized Playwright actions found in your code.', false);
+    }
+  },
+  table:{
+    html:`
+      <div>
+        <h3 style="margin-bottom:12px;font-size:15px;">Test runs</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px;" id="mockTable">
+          <thead><tr style="text-align:left;border-bottom:1px solid #ddd;"><th style="padding:6px 4px;">Name</th><th style="padding:6px 4px;">Status</th><th></th></tr></thead>
+          <tbody>
+            <tr data-row="Selenium" style="border-bottom:1px solid #eee;"><td style="padding:6px 4px;">Selenium</td><td style="padding:6px 4px;"><span style="color:#92400e;background:#fef3c7;padding:2px 8px;border-radius:10px;">Paused</span></td><td><button data-testid="del-selenium" style="font-size:11px;padding:3px 8px;border:1px solid #ccc;border-radius:5px;background:#fff;cursor:pointer;">Delete</button></td></tr>
+            <tr data-row="Playwright" style="border-bottom:1px solid #eee;"><td style="padding:6px 4px;">Playwright</td><td style="padding:6px 4px;"><span style="color:#065f46;background:#d1fae5;padding:2px 8px;border-radius:10px;">Active</span></td><td><button data-testid="del-playwright" style="font-size:11px;padding:3px 8px;border:1px solid #ccc;border-radius:5px;background:#fff;cursor:pointer;">Delete</button></td></tr>
+            <tr data-row="Cypress" style="border-bottom:1px solid #eee;"><td style="padding:6px 4px;">Cypress</td><td style="padding:6px 4px;"><span style="color:#92400e;background:#fef3c7;padding:2px 8px;border-radius:10px;">Paused</span></td><td><button data-testid="del-cypress" style="font-size:11px;padding:3px 8px;border:1px solid #ccc;border-radius:5px;background:#fff;cursor:pointer;">Delete</button></td></tr>
+          </tbody>
+        </table>
+      </div>`,
+    initState:{},
+    run:(code, state, log)=>{
+      const fns = parseActions(code);
+      let foundRow=false, statusChecked=false, deleted=false;
+      fns.forEach(action=>{
+        if(action.type==='locateRow'){ foundRow=true; log(`Located row containing "${action.value}"`, true); }
+        else if(action.type==='assertText' && /active/i.test(action.value)){
+          statusChecked = true;
+          log('PASS: Status column shows "Active"', true);
+        }
+        else if(action.type==='click' && /delete/i.test(action.target)){
+          deleted=true;
+          const row = document.querySelector('[data-row="Playwright"]');
+          if(row) row.style.opacity='0.15';
+          log('Clicked delete button on row', true);
+          highlight('del-playwright');
+        }
+        else if(action.type==='assertHidden' && /row|playwright/i.test(action.target)){
+          log(deleted ? 'PASS: Row removed from table' : 'FAIL: Row still present', deleted);
+        }
+      });
+      if(fns.length===0) log('No recognized Playwright actions found in your code.', false);
+    }
+  }
+};
+
+const SANDBOX_STARTER = {
+  login:`// Write Playwright-style steps below, one per line.
+// Supported: await page.goto('url')
+//            await page.getByLabel('Email').fill('value')
+//            await page.getByRole('button', { name: 'Log in' }).click()
+//            await expect(page.getByText('Welcome back')).toBeVisible()
+
+await page.goto('/login');
+await page.getByLabel('Email').fill('test_user@example.com');
+await page.getByLabel('Password').fill('SecurePass123');
+await page.getByRole('button', { name: 'Log in' }).click();
+await expect(page.getByText('Welcome back')).toBeVisible();`,
+  form:`// Supported: .fill('value'), .click(), toBeVisible(), toBeHidden()
+
+await page.getByLabel('Email').fill('');
+await page.getByRole('button', { name: 'Submit' }).click();
+await expect(page.getByText('Email is required')).toBeVisible();
+await page.getByLabel('Email').fill('user@test.com');
+await page.getByRole('button', { name: 'Submit' }).click();
+await expect(page.getByText('Email is required')).toBeHidden();`,
+  table:`// Supported: page.locateRow('text'), toContainText('value'),
+//            click on delete button, toBeHidden()
+
+const row = page.locateRow('Playwright');
+await expect(row).toContainText('Active');
+await page.getByTestId('del-playwright').click();
+await expect(row).toBeHidden();`
+};
+
+/* simple "parser" that turns lines of code into recognizable actions */
+function parseActions(code){
+  const lines = code.split('\n');
+  const actions = [];
+  lines.forEach(line=>{
+    let m;
+    if(m = line.match(/page\.goto\(['"](.+?)['"]\)/)) actions.push({type:'goto', value:m[1]});
+    else if(m = line.match(/getByLabel\(['"](.+?)['"]\)\.fill\(['"](.*?)['"]\)/)) actions.push({type:'fill', target:m[1], value:m[2]});
+    else if(m = line.match(/getByRole\(['"].+?['"],\s*\{\s*name:\s*['"](.+?)['"]\s*\}\)\.click\(\)/)) actions.push({type:'click', target:m[1]});
+    else if(m = line.match(/getByTestId\(['"](.+?)['"]\)\.click\(\)/)) actions.push({type:'click', target:m[1]});
+    else if(m = line.match(/toBeVisible\(\)/) ) {
+      const tm = line.match(/getByText\(['"](.+?)['"]\)/);
+      if(tm) actions.push({type:'assertVisible', target:tm[1]});
+    }
+    else if(m = line.match(/toBeHidden\(\)/)) {
+      const tm = line.match(/getByText\(['"](.+?)['"]\)/);
+      if(tm) actions.push({type:'assertHidden', target:tm[1]});
+      else actions.push({type:'assertHidden', target:'row'});
+    }
+    else if(m = line.match(/locateRow\(['"](.+?)['"]\)/)) actions.push({type:'locateRow', value:m[1]});
+    else if(m = line.match(/toContainText\(['"](.+?)['"]\)/)) actions.push({type:'assertText', value:m[1]});
+  });
+  return actions;
+}
+function highlight(testid){
+  const el = document.querySelector(`[data-testid="${testid}"]`);
+  if(!el) return;
+  el.classList.add('mock-highlight');
+  setTimeout(()=>el.classList.remove('mock-highlight'), 900);
+}
+
+/* ============================================================
+   STATE / STORAGE
+   ============================================================ */
+let PROGRESS = { completed:{}, quizScores:{}, currentLesson:null };
+const ALL_LESSONS = CURRICULUM.flatMap(m=>m.lessons);
+
+/* ============================================================
+   AUTH
+   Important limitation: this account system stores data only in
+   this browser's localStorage (or in-memory if unavailable). It is
+   NOT a real backend — there is no server, no real password security
+   beyond a client-side hash, and no cross-device access. It exists to
+   give a realistic signup/login UX while a real backend isn't wired up.
+   ============================================================ */
+const USERS_KEY = 'automatepath_users';
+const SESSION_KEY = 'automatepath_session';
+let CURRENT_USER = null; // { email }
+let _memUsers = null;
+let _memSession = null;
+
+/* Storage shim: uses window.storage when running as a Claude artifact,
+   falls back to localStorage when opened as a standalone HTML file,
+   falls back to in-memory (no persistence) if neither is available. */
+async function rawGet(key){
+  if(window.storage && typeof window.storage.get === 'function'){
+    try{ const res = await window.storage.get(key); return res ? res.value : null; }
+    catch(e){ return null; }
+  }
+  try{ if(window.localStorage){ return window.localStorage.getItem(key); } }
+  catch(e){ /* localStorage blocked (e.g. private mode, sandboxed iframe) */ }
+  return key===USERS_KEY ? _memUsers : (key===SESSION_KEY ? _memSession : null);
+}
+async function rawSet(key, value){
+  if(window.storage && typeof window.storage.set === 'function'){
+    try{ await window.storage.set(key, value); return; }
+    catch(e){ /* fall through */ }
+  }
+  try{ if(window.localStorage){ window.localStorage.setItem(key, value); return; } }
+  catch(e){ /* localStorage blocked */ }
+  if(key===USERS_KEY) _memUsers = value; else if(key===SESSION_KEY) _memSession = value;
+}
+async function rawRemove(key){
+  if(window.storage && typeof window.storage.delete === 'function'){
+    try{ await window.storage.delete(key); return; } catch(e){ /* ignore */ }
+  }
+  try{ if(window.localStorage){ window.localStorage.removeItem(key); return; } }
+  catch(e){ /* ignore */ }
+  if(key===USERS_KEY) _memUsers = null; else if(key===SESSION_KEY) _memSession = null;
+}
+
+/* SHA-256 hash via the browser's built-in crypto API (not a substitute
+   for real server-side password hashing like bcrypt/argon2, but far
+   better than storing plaintext). */
+async function hashPassword(password){
+  try{
+    const enc = new TextEncoder().encode(password);
+    const buf = await crypto.subtle.digest('SHA-256', enc);
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }catch(e){
+    // Extremely old/locked-down environments without SubtleCrypto: fall back
+    // to a simple non-cryptographic hash so the flow still functions.
+    let h = 0;
+    for(let i=0;i<password.length;i++){ h = ((h<<5)-h) + password.charCodeAt(i); h |= 0; }
+    return 'fallback_' + h;
+  }
+}
+async function getUsers(){
+  try{ const raw = await rawGet(USERS_KEY); return raw ? JSON.parse(raw) : {}; }
+  catch(e){ return {}; }
+}
+async function saveUsers(users){
+  await rawSet(USERS_KEY, JSON.stringify(users));
+}
+function normalizeEmail(email){ return (email||'').trim().toLowerCase(); }
+function isValidEmail(email){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
+
+async function handleSignup(){
+  const emailRaw = document.getElementById('signupEmail').value;
+  const pw = document.getElementById('signupPassword').value;
+  const pw2 = document.getElementById('signupPasswordConfirm').value;
+  const errEl = document.getElementById('signupError');
+  const email = normalizeEmail(emailRaw);
+
+  function showErr(msg){ errEl.textContent = msg; errEl.classList.add('show'); }
+  errEl.classList.remove('show');
+
+  if(!isValidEmail(email)) return showErr('Enter a valid email address.');
+  if(pw.length < 8) return showErr('Password must be at least 8 characters.');
+  if(pw !== pw2) return showErr('Passwords do not match.');
+
+  const users = await getUsers();
+  if(users[email]) return showErr('An account with this email already exists. Try logging in instead.');
+
+  const hashed = await hashPassword(pw);
+  users[email] = { passwordHash: hashed, createdAt: Date.now() };
+  await saveUsers(users);
+  await rawSet(SESSION_KEY, email);
+  CURRENT_USER = { email };
+  await enterApp();
+}
+
+async function handleLogin(){
+  const emailRaw = document.getElementById('loginEmail').value;
+  const pw = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  const email = normalizeEmail(emailRaw);
+
+  function showErr(msg){ errEl.textContent = msg; errEl.classList.add('show'); }
+  errEl.classList.remove('show');
+
+  if(!isValidEmail(email)) return showErr('Enter a valid email address.');
+  if(!pw) return showErr('Enter your password.');
+
+  const users = await getUsers();
+  const account = users[email];
+  if(!account) return showErr('No account found with this email. Try signing up.');
+
+  const hashed = await hashPassword(pw);
+  if(hashed !== account.passwordHash) return showErr('Incorrect password.');
+
+  await rawSet(SESSION_KEY, email);
+  CURRENT_USER = { email };
+  await enterApp();
+}
+
+async function handleLogout(){
+  await rawRemove(SESSION_KEY);
+  CURRENT_USER = null;
+  toggleUserMenu(false);
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('authScreen').style.display = 'flex';
+  switchAuthTab('login');
+}
+
+function switchAuthTab(tab){
+  const isLogin = tab === 'login';
+  document.getElementById('tabLogin').classList.toggle('active', isLogin);
+  document.getElementById('tabSignup').classList.toggle('active', !isLogin);
+  document.getElementById('loginForm').style.display = isLogin ? 'flex' : 'none';
+  document.getElementById('signupForm').style.display = isLogin ? 'none' : 'flex';
+  document.getElementById('loginError').classList.remove('show');
+  document.getElementById('signupError').classList.remove('show');
+}
+
+function toggleUserMenu(force){
+  const menu = document.getElementById('userMenu');
+  if(typeof force === 'boolean'){ menu.classList.toggle('open', force); return; }
+  menu.classList.toggle('open');
+}
+document.addEventListener && document.addEventListener('click', function(e){
+  const chip = document.getElementById('userChip');
+  if(chip && !chip.contains(e.target)) toggleUserMenu(false);
+});
+
+async function enterApp(){
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('userEmailLabel').textContent = CURRENT_USER.email;
+  document.getElementById('userAvatar').textContent = CURRENT_USER.email.charAt(0).toUpperCase();
+  await loadProgress();
+  renderSidebar();
+  goDashboard();
+}
+
+async function tryResumeSession(){
+  const email = await rawGet(SESSION_KEY);
+  if(email){
+    const users = await getUsers();
+    if(users[email]){
+      CURRENT_USER = { email };
+      return true;
+    }
+  }
+  return false;
+}
+
+/* Per-user progress storage: each account's progress is stored under
+   its own key so switching accounts on the same device/browser
+   doesn't mix progress between users. */
+function progressKeyForCurrentUser(){
+  const id = CURRENT_USER ? CURRENT_USER.email : 'anonymous';
+  return 'automatepath_progress__' + id;
+}
+async function loadProgress(){
+  try{
+    const value = await rawGet(progressKeyForCurrentUser());
+    PROGRESS = value ? JSON.parse(value) : { completed:{}, quizScores:{}, currentLesson:null };
+  }catch(e){
+    console.error('loadProgress failed, starting fresh', e);
+    PROGRESS = { completed:{}, quizScores:{}, currentLesson:null };
+  }
+}
+async function saveProgress(){
+  try{ await rawSet(progressKeyForCurrentUser(), JSON.stringify(PROGRESS)); }
+  catch(e){ console.error('save failed', e); }
+}
+function markComplete(lessonId){
+
+  PROGRESS.completed[lessonId] = true;
+  saveProgress();
+}
+function isComplete(lessonId){ return !!PROGRESS.completed[lessonId]; }
+function isUnlocked(lessonId){
+  const idx = ALL_LESSONS.findIndex(l=>l.id===lessonId);
+  if(idx<=0) return true;
+  return isComplete(ALL_LESSONS[idx-1].id);
+}
+function overallPercent(){
+  const done = ALL_LESSONS.filter(l=>isComplete(l.id)).length;
+  return Math.round((done/ALL_LESSONS.length)*100);
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+/* ============================================================
+   RENDER: SIDEBAR
+   ============================================================ */
+function renderSidebar(){
+  const sb = document.getElementById('sidebar');
+  const pct = overallPercent();
+  const doneCount = ALL_LESSONS.filter(l=>isComplete(l.id)).length;
+  let html = `
+    <div class="brand">
+      <div class="brand-title"><span>AutomatePath</span><span class="brand-badge">BETA</span></div>
+      <div class="brand-sub">Manual → automation testing</div>
+    </div>
+    <div class="progress-box">
+      <div class="progress-label"><span>Overall progress</span><span>${pct}%</span></div>
+      <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div class="progress-stats">
+        <div class="stat-chip"><i></i>${doneCount}/${ALL_LESSONS.length} lessons</div>
+      </div>
+    </div>
+    <div class="nav-section" id="navItems"></div>
+  `;
+  sb.innerHTML = html;
+  const nav = document.getElementById('navItems');
+  let navHtml = `<div class="nav-item ${currentView==='dashboard'?'active':''}" onclick="goDashboard()">
+      <div class="nav-icon ${currentView==='dashboard'?'active-icon':''}">•</div><div class="nav-title">Dashboard</div></div>`;
+  CURRICULUM.forEach(mod=>{
+    navHtml += `<div class="nav-section-title">${mod.icon}. ${mod.title}</div>`;
+    mod.lessons.forEach(lesson=>{
+      const done = isComplete(lesson.id);
+      const unlocked = isUnlocked(lesson.id);
+      const active = currentView==='lesson' && currentLessonId===lesson.id;
+      const typeIcon = lesson.type==='quiz' ? '?' : lesson.type==='sandbox' ? '◆' : '';
+      navHtml += `<div class="nav-item ${active?'active':''}" onclick="${unlocked?`openLesson('${lesson.id}')`:'lockedToast()'}" style="${unlocked?'':'opacity:0.45;cursor:not-allowed;'}">
+        <div class="nav-icon ${done?'done':(active?'active-icon':'')}">${done?'✓':(typeIcon||'')}</div>
+        <div class="nav-title">${lesson.title}</div>
+        ${!unlocked?'<span class="lock-icon">🔒</span>':''}
+      </div>`;
+    });
+  });
+  navHtml += `<div class="nav-section-title">Finish</div>
+    <div class="nav-item ${currentView==='cert'?'active':''}" onclick="goCert()">
+      <div class="nav-icon ${pct===100?'done':''}">${pct===100?'✓':'★'}</div><div class="nav-title">Certificate</div>
+    </div>`;
+  nav.innerHTML = navHtml;
+}
+function lockedToast(){ showToast('Complete the previous lesson to unlock this one'); }
+
+/* ============================================================
+   RENDER: DASHBOARD
+   ============================================================ */
+let currentView = 'dashboard';
+let currentLessonId = null;
+
+function goDashboard(){
+  currentView='dashboard'; currentLessonId=null;
+  document.getElementById('crumb').textContent='AutomatePath';
+  document.getElementById('topTitle').textContent='Dashboard';
+  renderSidebar();
+  const pct = overallPercent();
+  const nextLesson = ALL_LESSONS.find(l=>!isComplete(l.id));
+  let html = `
+    <div class="hero">
+      <h1>Welcome back</h1>
+      <p>You're ${pct}% through the path from manual tester to automation engineer. ${nextLesson ? `Pick up where you left off, or jump into any unlocked module below.` : `You've completed every lesson — check your certificate.`}</p>
+    </div>
+    <div class="track-grid">
+  `;
+  CURRICULUM.forEach((mod, i)=>{
+    const total = mod.lessons.length;
+    const done = mod.lessons.filter(l=>isComplete(l.id)).length;
+    const unlocked = mod.lessons.some(l=>isUnlocked(l.id));
+    html += `
+      <div class="track-card" onclick="${unlocked?`openLesson('${mod.lessons[0].id}')`:'lockedToast()'}">
+        <div class="track-card-head"><div class="track-num">${mod.icon}</div><h3>${mod.title}</h3></div>
+        <p>${total} lesson${total>1?'s':''} — ${mod.lessons.map(l=>l.type==='quiz'?'quiz':l.type==='sandbox'?'hands-on':'lesson').filter((v,i,a)=>a.indexOf(v)===i).join(', ')}</p>
+        <div class="track-meta"><span>${done}/${total} complete</span></div>
+      </div>
+    `;
+  });
+  html += `</div>`;
+  if(nextLesson){
+    html += `<div style="margin-top:28px;"><button class="nav-btn primary" onclick="openLesson('${nextLesson.id}')">Continue: ${nextLesson.title} →</button></div>`;
+  }
+  document.getElementById('content').innerHTML = html;
+}
+
+/* ============================================================
+   RENDER: LESSON ROUTER
+   ============================================================ */
+function findLesson(id){ return ALL_LESSONS.find(l=>l.id===id); }
+function findModuleOf(id){ return CURRICULUM.find(m=>m.lessons.some(l=>l.id===id)); }
+
+function openLesson(id){
+  if(!isUnlocked(id)){ lockedToast(); return; }
+  currentView='lesson'; currentLessonId=id;
+  const lesson = findLesson(id);
+  const mod = findModuleOf(id);
+  document.getElementById('crumb').textContent = mod.title;
+  document.getElementById('topTitle').textContent = lesson.title;
+  renderSidebar();
+  if(lesson.type==='lesson') renderLessonContent(lesson, mod);
+  else if(lesson.type==='quiz') renderQuiz(lesson, mod);
+  else if(lesson.type==='sandbox') renderSandbox(lesson, mod);
+  window.scrollTo(0,0);
+}
+
+function lessonNavButtons(lesson){
+  const idx = ALL_LESSONS.findIndex(l=>l.id===lesson.id);
+  const prev = ALL_LESSONS[idx-1];
+  const next = ALL_LESSONS[idx+1];
+  return `<div class="lesson-nav">
+    <button class="nav-btn" ${prev?`onclick="openLesson('${prev.id}')"`:'disabled'}>← Previous</button>
+    <button class="nav-btn primary" id="completeBtn" onclick="completeAndAdvance('${lesson.id}')">${isComplete(lesson.id)?'Completed ✓ — Next →':'Mark complete & continue →'}</button>
+  </div>`;
+}
+function completeAndAdvance(id){
+  const wasComplete = isComplete(id);
+  markComplete(id);
+  if(!wasComplete) showToast('Lesson complete');
+  const idx = ALL_LESSONS.findIndex(l=>l.id===id);
+  const next = ALL_LESSONS[idx+1];
+  renderSidebar();
+  if(next) openLesson(next.id); else goCert();
+}
+
+function renderLessonContent(lesson, mod){
+  let html = `
+    <div class="lesson-header">
+      <div class="lesson-kicker">${mod.title}</div>
+      <h1>${lesson.title}</h1>
+      <div class="lesson-meta-row"><span>${lesson.minutes} min read</span></div>
+    </div>
+    <div class="lesson-body">${lesson.body}</div>
+    ${lessonNavButtons(lesson)}
+  `;
+  document.getElementById('content').innerHTML = html;
+}
+
+/* ============================================================
+   RENDER: QUIZ
+   ============================================================ */
+function renderQuiz(lesson, mod){
+  let qState = { current:0, score:0, answered:[] };
+  function renderQ(){
+    const q = lesson.quiz[qState.current];
+    const total = lesson.quiz.length;
+    let optsHtml = q.opts.map((opt,i)=>`
+      <div class="quiz-opt" id="opt-${i}" onclick="selectQuizOpt(${i})">
+        <div class="opt-letter">${String.fromCharCode(65+i)}</div><div>${opt}</div>
+      </div>`).join('');
+    document.getElementById('content').innerHTML = `
+      <div class="lesson-header">
+        <div class="lesson-kicker">${mod.title} · Quiz</div>
+        <h1>${lesson.title}</h1>
+      </div>
+      <div class="quiz-box">
+        <div class="quiz-progress">Question ${qState.current+1} of ${total}</div>
+        <div class="quiz-q">${q.q}</div>
+        ${optsHtml}
+        <div class="quiz-explain" id="quizExplain"></div>
+        <div class="quiz-footer">
+          <div class="quiz-score">Score: ${qState.score}/${qState.answered.length}</div>
+          <button class="nav-btn primary" id="quizNextBtn" style="display:none" onclick="quizNext()">${qState.current===total-1?'Finish quiz':'Next question'} →</button>
+        </div>
+      </div>
+    `;
+    window._quizState = qState;
+    window._quizLesson = lesson;
+    window._quizMod = mod;
+  }
+  window.selectQuizOpt = function(i){
+    const q = lesson.quiz[qState.current];
+    if(qState.answered[qState.current] !== undefined) return;
+    qState.answered[qState.current] = i;
+    const correct = q.correct;
+    document.querySelectorAll('.quiz-opt').forEach((el,idx)=>{
+      if(idx===correct) el.classList.add('correct');
+      else if(idx===i) el.classList.add('incorrect');
+    });
+    if(i===correct) qState.score++;
+    document.getElementById('quizExplain').textContent = q.explain;
+    document.getElementById('quizExplain').classList.add('show');
+    document.getElementById('quizNextBtn').style.display='inline-block';
+    document.querySelector('.quiz-score').textContent = `Score: ${qState.score}/${qState.answered.length}`;
+  };
+  window.quizNext = function(){
+    if(qState.current < lesson.quiz.length-1){
+      qState.current++;
+      renderQ();
+    } else {
+      PROGRESS.quizScores[lesson.id] = `${qState.score}/${lesson.quiz.length}`;
+      markComplete(lesson.id);
+      showToast(`Quiz complete: ${qState.score}/${lesson.quiz.length}`);
+      const idx = ALL_LESSONS.findIndex(l=>l.id===lesson.id);
+      const next = ALL_LESSONS[idx+1];
+      renderSidebar();
+      if(next) openLesson(next.id); else goCert();
+    }
+  };
+  renderQ();
+}
+
+/* ============================================================
+   RENDER: SANDBOX
+   ============================================================ */
+function renderSandbox(lesson, mod){
+  const scenario = SANDBOX_SCENARIOS[lesson.scenario];
+  const starter = SANDBOX_STARTER[lesson.scenario];
+  let html = `
+    <div class="lesson-header">
+      <div class="lesson-kicker">${mod.title} · Hands-on</div>
+      <h1>${lesson.title}</h1>
+      <div class="lesson-meta-row"><span>${lesson.minutes} min</span></div>
+    </div>
+    <p style="color:var(--text-dim); font-size:14px; margin-bottom:14px;">${lesson.instructions}</p>
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:6px;">
+      ${lesson.tasks.map(t=>`<div class="ex-task"><div class="ex-check"></div><div>${t}</div></div>`).join('')}
+    </div>
+    <div class="sandbox-wrap">
+      <div class="sandbox-grid">
+        <div class="editor-pane">
+          <div class="editor-pane-head">
+            <span>test.spec.ts</span>
+            <button class="run-btn" onclick="runSandbox()">▶ Run test</button>
+          </div>
+          <textarea id="codeInput" spellcheck="false">${starter}</textarea>
+        </div>
+        <div class="preview-pane">
+          <div class="preview-pane-head"><span>Mock browser preview</span><span id="resetLink" style="cursor:pointer;color:var(--accent);" onclick="resetSandbox()">Reset</span></div>
+          <div id="mockSite">${scenario.html}</div>
+        </div>
+      </div>
+      <div id="consoleOut"><div class="console-line console-info">Console output will appear here when you run your test.</div></div>
+    </div>
+    ${lessonNavButtons(lesson)}
+  `;
+  document.getElementById('content').innerHTML = html;
+  window._currentScenario = lesson.scenario;
+  window._sandboxBaseHtml = scenario.html;
+}
+function resetSandbox(){
+  document.getElementById('mockSite').innerHTML = window._sandboxBaseHtml;
+  document.getElementById('consoleOut').innerHTML = '<div class="console-line console-info">Reset. Run your test again.</div>';
+}
+function runSandbox(){
+  const code = document.getElementById('codeInput').value;
+  resetSandbox();
+  const consoleEl = document.getElementById('consoleOut');
+  consoleEl.innerHTML='';
+  let passCount=0, failCount=0;
+  function log(msg, pass){
+    const line = document.createElement('div');
+    line.className = 'console-line ' + (pass===true ? 'console-pass' : pass===false ? 'console-fail' : 'console-info');
+    line.textContent = (pass===true?'✓ ':pass===false?'✗ ':'  ') + msg;
+    consoleEl.appendChild(line);
+    if(pass===true) passCount++;
+    if(pass===false) failCount++;
+    consoleEl.scrollTop = consoleEl.scrollHeight;
+  }
+  const scenario = SANDBOX_SCENARIOS[window._currentScenario];
+  try{
+    scenario.run(code, scenario.initState, log);
+  }catch(e){
+    log('Error running script: ' + e.message, false);
+  }
+  const summary = document.createElement('div');
+  summary.className = 'console-line';
+  summary.style.marginTop='6px';
+  summary.style.color = failCount>0 ? 'var(--amber)' : 'var(--green)';
+  summary.textContent = `Run complete — ${passCount} passed, ${failCount} failed`;
+  consoleEl.appendChild(summary);
+  if(failCount===0 && passCount>0) showToast('Nice — test run passed');
+}
+
+/* ============================================================
+   RENDER: CERTIFICATE
+   ============================================================ */
+function goCert(){
+  currentView='cert'; currentLessonId=null;
+  document.getElementById('crumb').textContent='AutomatePath';
+  document.getElementById('topTitle').textContent='Certificate';
+  renderSidebar();
+  const pct = overallPercent();
+  let html='';
+  if(pct===100){
+    html = `
+      <div class="cert-box">
+        <h2>🎓 Course complete</h2>
+        <p>You've completed the full path from manual to automation testing with Playwright — foundations, programming basics, locators, actions, assertions, framework design, and hands-on practice.</p>
+        <button class="nav-btn primary" onclick="goDashboard()">Back to dashboard</button>
+      </div>
+    `;
+  } else {
+    const remaining = ALL_LESSONS.length - ALL_LESSONS.filter(l=>isComplete(l.id)).length;
+    html = `
+      <div class="cert-box">
+        <h2>Almost there</h2>
+        <p>You have ${remaining} lesson${remaining>1?'s':''} left before your certificate unlocks. Keep going — you're ${pct}% through.</p>
+        <button class="nav-btn primary" onclick="goDashboard()">Continue learning</button>
+      </div>
+    `;
+  }
+  document.getElementById('content').innerHTML = html;
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+async function init(){
+  try{
+    const resumed = await tryResumeSession();
+    if(resumed){
+      await enterApp();
+    } else {
+      document.getElementById('authScreen').style.display = 'flex';
+      document.getElementById('app').style.display = 'none';
+      // allow Enter key to submit whichever form is active
+      document.getElementById('loginPassword').addEventListener('keydown', e=>{ if(e.key==='Enter') handleLogin(); });
+      document.getElementById('signupPasswordConfirm').addEventListener('keydown', e=>{ if(e.key==='Enter') handleSignup(); });
+    }
+  }catch(e){
+    console.error('AutomatePath failed to initialize:', e);
+    document.body.innerHTML =
+      '<div style="padding:40px;max-width:600px;margin:40px auto;font-family:sans-serif;color:#e8eaed;background:#13161b;border-radius:12px;">'+
+      '<h2 style="margin-bottom:12px;">Something went wrong loading AutomatePath</h2>'+
+      '<p style="color:#9aa3b2;margin-bottom:16px;">Error: '+ (e && e.message ? e.message : e) +'</p>'+
+      '<p style="color:#9aa3b2;">Try refreshing the page. If you opened this file directly from disk, try a different browser, or open it via a local server instead of the file:// protocol.</p>'+
+      '</div>';
+  }
+}
+init();
+</script>
+</body>
+</html>
